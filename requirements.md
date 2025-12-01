@@ -1004,6 +1004,217 @@ All tools accept an optional `projectPath` parameter to specify which project to
 
 ---
 
+### 2.10 Tool Window UI
+
+#### FR-2.10.1: Tool Window Layout
+**Description:** A dedicated tool window for monitoring MCP server status and command history.
+
+**Layout Structure:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [Toolbar: Refresh | Copy URL | Clear | Export] [Install ▼] │
+├─────────────────────────────────────────────────────────────┤
+│ ServerStatusPanel                                           │
+│ ● MCP Server Running | http://localhost:63342/... | Project │
+├─────────────────────────────────────────────────────────────┤
+│ AgentRuleTipPanel (Yellow background)                       │
+│ ℹ Tip: Copy this rule to CLAUDE.md...        [Copy rule]   │
+├─────────────────────────────────────────────────────────────┤
+│ FilterToolbar                                               │
+│ Tool: [▼] | Status: [▼] | Search: [________]               │
+├─────────────────────────────────────────────────────────────┤
+│ Command History List (60%)                                  │
+│ ┌─────────────────────────────────────────────────────────┐│
+│ │ 14:32:15  set_breakpoint                   SUCCESS      ││
+│ │ 14:32:10  get_debug_session_status         SUCCESS      ││
+│ │ 14:32:05  evaluate                         ERROR        ││
+│ └─────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│ Details Area (40%)                                          │
+│ ┌─────────────────────────────────────────────────────────┐│
+│ │ Tool: set_breakpoint                                    ││
+│ │ Status: SUCCESS                                         ││
+│ │ Duration: 45ms                                          ││
+│ │                                                         ││
+│ │ Parameters:                                             ││
+│ │ {"file_path": "/src/Main.java", "line": 42}            ││
+│ │                                                         ││
+│ │ Result:                                                 ││
+│ │ {"breakpoint_id": "bp_123", "verified": true}          ││
+│ └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Acceptance Criteria:**
+- Tool window anchored at bottom of IDE
+- Splitter between history list (60%) and details (40%)
+- Real-time updates when commands are executed
+- Auto-scroll to newest commands (configurable)
+
+#### FR-2.10.2: Server Status Panel
+**Description:** Display MCP server status and connection information.
+
+**Components:**
+- Status indicator with colored icon (green=running, red=error)
+- Server URL (clickable to copy)
+- Current project name
+
+**Status Colors:**
+| Status | Color (Light/Dark) |
+|--------|-------------------|
+| Running | `#59A869` (green) |
+| Error | `#E05555` (red) |
+| Pending | `#D9A343` (orange) |
+
+#### FR-2.10.3: Agent Rule Tip Panel
+**Description:** Yellow highlighted banner prompting users to add plugin rule to their AI agent config.
+
+**Components:**
+- Info icon (ℹ)
+- Tip text: "Tip: Copy this rule to your CLAUDE.md/AGENTS.md/.cursorrules file"
+- "Copy rule" link button
+
+**Rule Text to Copy:**
+```
+IMPORTANT: When debugging, prefer using jetbrains-debugger MCP tools to interact with the IDE debugger.
+```
+
+**Styling:**
+- Background: `JBColor(0xFFFBE6, 0x3D3D00)` (light yellow / dark gold)
+- Link color: Blue with underline on hover
+- Font size: 11pt
+
+**Notification on Copy:**
+Shows balloon notification with hints about config file locations:
+- Claude Code: `CLAUDE.md` (project root) or `~/.claude/CLAUDE.md` (global)
+- Cursor: `.cursorrules` or `.cursor/rules/*.mdc`
+- Other agents: Check documentation
+
+#### FR-2.10.4: Filter Toolbar
+**Description:** Filter and search command history.
+
+**Components:**
+- Tool dropdown: All tools + "All" option
+- Status dropdown: SUCCESS, ERROR, PENDING, All
+- Search text field: Real-time filtering
+
+**Behavior:**
+- Filters combine with AND logic
+- Search matches tool name, parameters, and results
+- Filters persist during session
+
+#### FR-2.10.5: Command History List
+**Description:** Scrollable list of executed MCP commands.
+
+**List Item Layout:**
+```
+[Timestamp]  [Tool Name]                    [Status]
+14:32:15     set_breakpoint                 SUCCESS
+```
+
+**Styling:**
+- Timestamp: Gray, `HH:mm:ss` format
+- Tool name: Bold
+- Status: Colored (green/red/orange)
+
+**Behavior:**
+- Newest commands at top
+- Click to show details
+- Auto-scroll configurable
+
+#### FR-2.10.6: Command Details Area
+**Description:** Display full details of selected command.
+
+**Content:**
+```
+Tool: {tool_name}
+Status: {status}
+Timestamp: {ISO timestamp}
+Duration: {ms}ms
+
+Parameters:
+{JSON formatted parameters}
+
+Error: (if present)
+{error message}
+
+Result: (if present)
+{JSON formatted result}
+
+Affected Files: (if present)
+  - file1.java
+  - file2.java
+```
+
+**Styling:**
+- Monospaced font (12pt)
+- JSON pretty-printed
+- Scrollable
+
+#### FR-2.10.7: Install on Coding Agents Button
+**Description:** Prominent button to help users configure AI coding agents.
+
+**Popup Structure:**
+```
+┌─────────────────────────────────────────┐
+│ Install on Coding Agents                │
+├─────────────────────────────────────────┤
+│ INSTALL NOW                             │
+├─────────────────────────────────────────┤
+│ ⚙ Claude Code (CLI)                    │
+│   Run installation command              │
+├─────────────────────────────────────────┤
+│ ─────────────────────────────────────── │
+├─────────────────────────────────────────┤
+│ COPY CONFIGURATION                      │
+├─────────────────────────────────────────┤
+│ Claude Code (CLI)                       │
+│ Claude Desktop                          │
+│ Cursor                                  │
+│ VS Code (Generic MCP)                   │
+│ Windsurf                                │
+└─────────────────────────────────────────┘
+```
+
+**Install Now Section:**
+- Runs shell command directly: `claude mcp add --transport http jetbrains-debugger {url}`
+- Shows success/failure notification
+- Handles reinstall (removes first if exists)
+
+**Copy Configuration Section:**
+- Copies JSON config to clipboard
+- Shows notification with config location hints
+
+**Supported Clients:**
+| Client | Config Format | Config Location |
+|--------|--------------|-----------------|
+| Claude Code | CLI command | Terminal |
+| Claude Desktop | JSON | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Cursor | JSON | `.cursor/mcp.json` |
+| VS Code | JSON | `.vscode/settings.json` |
+| Windsurf | JSON | `~/.codeium/windsurf/mcp_config.json` |
+
+#### FR-2.10.8: Toolbar Actions
+**Description:** Quick action buttons in toolbar.
+
+| Action | Icon | Description |
+|--------|------|-------------|
+| Refresh | `AllIcons.Actions.Refresh` | Refresh server status and history |
+| Copy URL | `AllIcons.Actions.Copy` | Copy server URL to clipboard |
+| Clear History | `AllIcons.Actions.GC` | Clear command history (with confirmation) |
+| Export History | `AllIcons.ToolbarDecorator.Export` | Export to JSON/CSV file |
+
+#### FR-2.10.9: Settings
+**Description:** Plugin configuration in IDE Settings.
+
+**Settings:**
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| Max History Size | Integer | 100 | Maximum commands to keep in history |
+| Auto-scroll | Boolean | true | Scroll to new commands automatically |
+
+---
+
 ## 3. Non-Functional Requirements
 
 ### 3.1 Performance

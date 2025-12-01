@@ -212,17 +212,17 @@ writeAction {
 
 ### 2.3 Coroutine Best Practices
 
-#### Service Scope Injection
+#### Service Scope with SupervisorJob
+Use `SupervisorJob` to isolate tool failures - one tool error won't cancel others:
+
 ```kotlin
-@Service(Service.Level.PROJECT)
-class MyService(
-    private val project: Project,
-    private val scope: CoroutineScope  // Injected, tied to service lifecycle
-) {
-    fun doAsync() {
-        scope.launch {
-            // Coroutine work
-        }
+@Service(Service.Level.APP)
+class McpServerService : Disposable {
+    // SupervisorJob ensures failure in one tool doesn't cancel others
+    val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    override fun dispose() {
+        coroutineScope.cancel("McpServerService disposed")
     }
 }
 ```
@@ -230,25 +230,48 @@ class MyService(
 #### Dispatcher Selection
 | Dispatcher | Use Case |
 |------------|----------|
-| `Dispatchers.Default` | CPU-intensive work |
+| `Dispatchers.Default` | CPU-intensive work, PSI operations |
 | `Dispatchers.IO` | Blocking I/O operations |
-| `Dispatchers.EDT` | UI updates (IntelliJ-specific) |
+| `Dispatchers.EDT` | UI updates, write actions (IntelliJ-specific) |
 | `Dispatchers.Main` | UI but NO read/write actions |
 
 #### Read Actions in Coroutines
 ```kotlin
-// Write-allowing read action (cancels on write)
-val data = readAction {
+// Write-allowing read action (WARA) - yields to pending writes
+// Preferred for long-running operations
+val data = platformReadAction {
     collectData()
 }
 
-// Write-blocking read action (blocks writes until complete)
-val data = readActionBlocking {
+// Blocking read action (use for short operations only)
+val data = ReadAction.compute<T, Throwable> {
     collectData()
 }
 ```
 
-### 2.4 Plugin Dependencies
+### 2.4 AbstractMcpTool Pattern
+
+All MCP tools should extend a base class that handles common patterns:
+
+```kotlin
+abstract class AbstractMcpTool : McpTool {
+    protected abstract suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult
+
+    // Check for cancellation in loops
+    protected fun checkCanceled() {
+        ProgressManager.checkCanceled()
+    }
+
+    // Create success/error results
+    protected fun createSuccessResult(text: String): ToolCallResult
+    protected fun createErrorResult(message: String): ToolCallResult
+    protected inline fun <reified T> createJsonResult(data: T): ToolCallResult
+}
+```
+
+**Note:** Unlike index/navigation tools, debugger tools work with runtime state rather than PSI/files, so they don't need read/write actions or PSI synchronization.
+
+### 2.5 Plugin Dependencies
 
 For debugger functionality, add to `gradle.properties`:
 ```properties
@@ -261,7 +284,7 @@ And in `plugin.xml`:
 <depends optional="true" config-file="java-support.xml">com.intellij.java</depends>
 ```
 
-### 2.5 Error Handling
+### 2.6 Error Handling
 
 ```kotlin
 // Use thisLogger() for logging
@@ -278,7 +301,7 @@ class MyService {
 }
 ```
 
-### 2.6 JetBrains MCP Server Integration
+### 2.7 JetBrains MCP Server Integration
 
 Since IntelliJ 2025.2, MCP server functionality is built-in. To extend it:
 
