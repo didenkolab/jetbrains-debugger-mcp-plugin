@@ -99,9 +99,19 @@ for detailed documentation and examples.</p>
         <applicationService
             serviceImplementation="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.McpServerService"/>
 
+        <!-- Project-level service for command history -->
+        <projectService
+            serviceImplementation="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.history.CommandHistoryService"/>
+
         <!-- HTTP request handler for MCP endpoints -->
         <httpRequestHandler
             implementation="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.McpRequestHandler"/>
+
+        <!-- Tool window for debugger MCP server -->
+        <toolWindow id="Debugger MCP Server"
+                    anchor="bottom"
+                    icon="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.icons.McpIcons.ToolWindow"
+                    factoryClass="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.ui.McpToolWindowFactory"/>
 
         <!-- Notification group for plugin messages -->
         <notificationGroup id="Debugger MCP Server" displayType="BALLOON"/>

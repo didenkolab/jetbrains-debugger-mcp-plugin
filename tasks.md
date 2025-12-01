@@ -15,16 +15,16 @@
 | 2 | Server Infrastructure | **Complete** | 12/12 |
 | 3 | Tool Framework | **Complete** | 10/10 |
 | 4 | P0 Tools - Core Debugging | **Complete** | 24/24 |
-| 5 | Command History Service | Not Started | 0/8 |
-| 6 | GUI - Tool Window | Not Started | 0/16 |
+| 5 | Command History Service | **Complete** | 8/8 |
+| 6 | GUI - Tool Window | **Complete** | 16/16 |
 | 7 | P1 Tools - Enhanced Features | Not Started | 0/12 |
 | 8 | P2 Tools - Advanced Features | Not Started | 0/8 |
 | 9 | Settings & Actions | Not Started | 0/14 |
 | 10 | Testing & Polish | Not Started | 0/12 |
 
 **Total Tasks**: 124
-**Completed**: 54
-**Overall Progress**: 44%
+**Completed**: 78
+**Overall Progress**: 63%
 
 ---
 
@@ -416,44 +416,44 @@
 
 ### Tasks
 
-- [ ] **5.1** Create `history/CommandModels.kt`
-  - [ ] Define `CommandEntry` data class
-  - [ ] Define `CommandStatus` enum (PENDING, SUCCESS, ERROR)
-  - [ ] Define `CommandFilter` data class
-  - [ ] Define `CommandHistoryListener` interface
+- [x] **5.1** Create `history/CommandModels.kt`
+  - [x] Define `CommandEntry` data class
+  - [x] Define `CommandStatus` enum (PENDING, SUCCESS, ERROR)
+  - [x] Define `CommandFilter` data class
+  - [x] Define `CommandHistoryListener` interface
 
-- [ ] **5.2** Create `history/CommandHistoryService.kt`
-  - [ ] Annotate as `@Service(Service.Level.PROJECT)`
-  - [ ] Use synchronized list for thread safety
-  - [ ] Use CopyOnWriteArrayList for listeners
+- [x] **5.2** Create `history/CommandHistoryService.kt`
+  - [x] Annotate as `@Service(Service.Level.PROJECT)`
+  - [x] Use synchronized list for thread safety
+  - [x] Use CopyOnWriteArrayList for listeners
 
-- [ ] **5.3** Implement history management methods
-  - [ ] Implement `addCommand(entry: CommandEntry)`
-  - [ ] Implement `updateCommandStatus(id, status, result, durationMs?)`
-  - [ ] Implement `clearHistory()`
-  - [ ] Implement `getFilteredHistory(filter: CommandFilter)`
+- [x] **5.3** Implement history management methods
+  - [x] Implement `addCommand(entry: CommandEntry)`
+  - [x] Implement `updateCommandStatus(id, status, result, durationMs?)`
+  - [x] Implement `clearHistory()`
+  - [x] Implement `getFilteredHistory(filter: CommandFilter)`
 
-- [ ] **5.4** Implement listener management
-  - [ ] Implement `addListener(listener)`
-  - [ ] Implement `removeListener(listener)`
-  - [ ] Implement `notifyListeners()` (invoke on EDT)
+- [x] **5.4** Implement listener management
+  - [x] Implement `addListener(listener)`
+  - [x] Implement `removeListener(listener)`
+  - [x] Implement `notifyListeners()` (invoke on EDT)
 
-- [ ] **5.5** Implement history size limit
-  - [ ] Read maxHistorySize from settings
-  - [ ] Trim oldest entries when limit exceeded
+- [x] **5.5** Implement history size limit
+  - [x] Read maxHistorySize from settings
+  - [x] Trim oldest entries when limit exceeded
 
-- [ ] **5.6** Integrate with JsonRpcHandler
-  - [ ] Record command start in processToolCall
-  - [ ] Update command status after execution
-  - [ ] Track duration
+- [x] **5.6** Integrate with JsonRpcHandler
+  - [x] Record command start in processToolCall
+  - [x] Update command status after execution
+  - [x] Track duration
 
-- [ ] **5.7** Add export functionality
-  - [ ] Define `CommandEntryExport` for serialization
-  - [ ] Implement `exportToJson(): String`
-  - [ ] Implement `exportToCsv(): String`
+- [x] **5.7** Add export functionality
+  - [x] Define `CommandEntryExport` for serialization
+  - [x] Implement `exportToJson(): String`
+  - [x] Implement `exportToCsv(): String`
 
-- [ ] **5.8** Register service in `plugin.xml`
-  - [ ] Add `<projectService>` extension
+- [x] **5.8** Register service in `plugin.xml`
+  - [x] Add `<projectService>` extension
 
 **Phase 5 Deliverables**:
 - CommandHistoryService tracking all tool calls
@@ -470,92 +470,92 @@
 
 ### 6.1 Basic Tool Window
 
-- [ ] **6.1.1** Create `ui/McpToolWindowFactory.kt`
-  - [ ] Implement ToolWindowFactory interface
-  - [ ] Implement DumbAware marker interface
-  - [ ] Create toolbar with action group
-  - [ ] Create Install button (right side)
-  - [ ] Layout toolbar and main panel
+- [x] **6.1.1** Create `ui/McpToolWindowFactory.kt`
+  - [x] Implement ToolWindowFactory interface
+  - [x] Implement DumbAware marker interface
+  - [x] Create toolbar with action group
+  - [x] Create Install button (right side)
+  - [x] Layout toolbar and main panel
 
-- [ ] **6.1.2** Register tool window in `plugin.xml`
-  - [ ] Add `<toolWindow>` extension
-  - [ ] Set anchor="bottom"
-  - [ ] Set appropriate icon
+- [x] **6.1.2** Register tool window in `plugin.xml`
+  - [x] Add `<toolWindow>` extension
+  - [x] Set anchor="bottom"
+  - [x] Set appropriate icon
 
 ### 6.2 Server Status Panel
 
-- [ ] **6.2.1** Create `ui/ServerStatusPanel.kt`
-  - [ ] Display status indicator (● Running/Stopped)
-  - [ ] Display server URL
-  - [ ] Display current project name
-  - [ ] Implement `refresh()` method
-  - [ ] Use appropriate colors (green for running)
+- [x] **6.2.1** Create `ui/ServerStatusPanel.kt`
+  - [x] Display status indicator (● Running/Stopped)
+  - [x] Display server URL
+  - [x] Display current project name
+  - [x] Implement `refresh()` method
+  - [x] Use appropriate colors (green for running)
 
 ### 6.3 Agent Rule Tip Panel
 
-- [ ] **6.3.1** Create `ui/AgentRuleTipPanel.kt`
-  - [ ] Use yellow background (JBColor for light/dark)
-  - [ ] Add info icon
-  - [ ] Add tip text
-  - [ ] Add "Copy rule" link with hover effect
-  - [ ] Implement copy to clipboard
-  - [ ] Show notification after copy
+- [x] **6.3.1** Create `ui/AgentRuleTipPanel.kt`
+  - [x] Use yellow background (JBColor for light/dark)
+  - [x] Add info icon
+  - [x] Add tip text
+  - [x] Add "Copy rule" link with hover effect
+  - [x] Implement copy to clipboard
+  - [x] Show notification after copy
 
-- [ ] **6.3.2** Define AGENT_RULE_TEXT constant
-  - [ ] Write appropriate rule text for debugger plugin
+- [x] **6.3.2** Define AGENT_RULE_TEXT constant
+  - [x] Write appropriate rule text for debugger plugin
 
 ### 6.4 Filter Toolbar
 
-- [ ] **6.4.1** Create `ui/FilterToolbar.kt`
-  - [ ] Add tool name filter (ComboBox)
-  - [ ] Add status filter (ComboBox)
-  - [ ] Add search field
-  - [ ] Implement filter callback
+- [x] **6.4.1** Create `ui/FilterToolbar.kt`
+  - [x] Add tool name filter (ComboBox)
+  - [x] Add status filter (ComboBox)
+  - [x] Add search field
+  - [x] Implement filter callback
 
-- [ ] **6.4.2** Populate tool name filter dynamically
-  - [ ] Get tool names from registry
-  - [ ] Add "All" option
+- [x] **6.4.2** Populate tool name filter dynamically
+  - [x] Get tool names from registry
+  - [x] Add "All" option
 
 ### 6.5 Command History List
 
-- [ ] **6.5.1** Create `ui/CommandListCellRenderer.kt`
-  - [ ] Display timestamp (gray, formatted)
-  - [ ] Display tool name (bold)
-  - [ ] Display status with color coding
-  - [ ] Handle selection highlighting
+- [x] **6.5.1** Create `ui/CommandListCellRenderer.kt`
+  - [x] Display timestamp (gray, formatted)
+  - [x] Display tool name (bold)
+  - [x] Display status with color coding
+  - [x] Handle selection highlighting
 
 ### 6.6 Main Panel
 
-- [ ] **6.6.1** Create `ui/McpToolWindowPanel.kt`
-  - [ ] Implement Disposable interface
-  - [ ] Implement CommandHistoryListener interface
-  - [ ] Layout all subcomponents
-  - [ ] Create JBSplitter (60/40) for list/details
+- [x] **6.6.1** Create `ui/McpToolWindowPanel.kt`
+  - [x] Implement Disposable interface
+  - [x] Implement CommandHistoryListener interface
+  - [x] Layout all subcomponents
+  - [x] Create JBSplitter (60/40) for list/details
 
-- [ ] **6.6.2** Implement history list
-  - [ ] Use JBList with DefaultListModel
-  - [ ] Set CommandListCellRenderer
-  - [ ] Handle selection changes
+- [x] **6.6.2** Implement history list
+  - [x] Use JBList with DefaultListModel
+  - [x] Set CommandListCellRenderer
+  - [x] Handle selection changes
 
-- [ ] **6.6.3** Implement details area
-  - [ ] Use JBTextArea with monospace font
-  - [ ] Format command details (tool, status, duration, params, result)
-  - [ ] Update on selection change
+- [x] **6.6.3** Implement details area
+  - [x] Use JBTextArea with monospace font
+  - [x] Format command details (tool, status, duration, params, result)
+  - [x] Update on selection change
 
-- [ ] **6.6.4** Implement listener callbacks
-  - [ ] Handle onCommandAdded (add to top, auto-scroll)
-  - [ ] Handle onCommandUpdated (update in place)
-  - [ ] Handle onHistoryCleared
+- [x] **6.6.4** Implement listener callbacks
+  - [x] Handle onCommandAdded (add to top, auto-scroll)
+  - [x] Handle onCommandUpdated (update in place)
+  - [x] Handle onHistoryCleared
 
-- [ ] **6.6.5** Implement refresh functionality
-  - [ ] Refresh server status
-  - [ ] Refresh history list
+- [x] **6.6.5** Implement refresh functionality
+  - [x] Refresh server status
+  - [x] Refresh history list
 
 ### 6.7 Icons
 
-- [ ] **6.7.1** Create/add tool window icon
-  - [ ] Add `icons/toolWindow.svg`
-  - [ ] Create McpIcons object for icon references
+- [x] **6.7.1** Create/add tool window icon
+  - [x] Add `icons/debugger-mcp.svg`
+  - [x] Create McpIcons object for icon references
 
 **Phase 6 Deliverables**:
 - Complete tool window matching index plugin design

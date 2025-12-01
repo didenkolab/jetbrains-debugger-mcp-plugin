@@ -1,6 +1,9 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server
 
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.McpConstants
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.history.CommandEntry
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.history.CommandHistoryService
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.history.CommandStatus
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.*
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.ToolRegistry
 import com.intellij.openapi.diagnostic.logger
@@ -124,14 +127,48 @@ class JsonRpcHandler(
 
         val project = projectResult.project!!
 
+        // Record command in history
+        val commandEntry = CommandEntry(
+            toolName = toolName,
+            parameters = arguments
+        )
+        val historyService = CommandHistoryService.getInstance(project)
+        historyService.recordCommand(commandEntry)
+
+        val startTime = System.currentTimeMillis()
+
         return try {
             val result = tool.execute(project, arguments)
+            val durationMs = System.currentTimeMillis() - startTime
+
+            // Update command status
+            historyService.updateCommandStatus(
+                id = commandEntry.id,
+                status = if (result.isError) CommandStatus.ERROR else CommandStatus.SUCCESS,
+                result = result.content.firstOrNull()?.let {
+                    when (it) {
+                        is ContentBlock.Text -> it.text
+                    }
+                },
+                durationMs = durationMs
+            )
+
             JsonRpcResponse(
                 id = request.id,
                 result = json.encodeToJsonElement(result)
             )
         } catch (e: Exception) {
+            val durationMs = System.currentTimeMillis() - startTime
             LOG.error("Tool execution failed: $toolName", e)
+
+            // Update command status with error
+            historyService.updateCommandStatus(
+                id = commandEntry.id,
+                status = CommandStatus.ERROR,
+                result = e.message ?: "Unknown error",
+                durationMs = durationMs
+            )
+
             JsonRpcResponse(
                 id = request.id,
                 result = json.encodeToJsonElement(
