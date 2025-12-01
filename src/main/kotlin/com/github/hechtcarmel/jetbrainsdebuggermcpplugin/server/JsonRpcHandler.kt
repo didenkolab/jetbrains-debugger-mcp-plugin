@@ -1,54 +1,61 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.McpConstants
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.*
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.ToolRegistry
-import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.util.ProjectResolutionResult
-import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.util.ProjectUtils
-import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.util.mcpJson
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 
 class JsonRpcHandler(
-    private val toolRegistry: ToolRegistry,
-    private val serverService: McpServerService
+    private val toolRegistry: ToolRegistry
 ) {
-    private val log = Logger.getInstance(JsonRpcHandler::class.java)
-
-    suspend fun handleRequest(jsonString: String): String? {
-        val request = try {
-            mcpJson.decodeFromString<JsonRpcRequest>(jsonString)
-        } catch (e: Exception) {
-            log.warn("Failed to parse JSON-RPC request: ${e.message}")
-            return mcpJson.encodeToString(createParseErrorResponse())
-        }
-
-        log.debug("Handling JSON-RPC request: method=${request.method}, id=${request.id}")
-
-        // Handle notifications (no response expected)
-        if (request.id == null) {
-            handleNotification(request)
-            return null
-        }
-
-        val response = routeRequest(request)
-        return mcpJson.encodeToString(response)
+    private val json = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        prettyPrint = false
     }
 
-    private fun handleNotification(request: JsonRpcRequest) {
-        when (request.method) {
-            JsonRpcMethods.INITIALIZED -> {
-                log.info("Client initialized notification received")
-            }
-            else -> {
-                log.debug("Unknown notification: ${request.method}")
-            }
+    companion object {
+        private val LOG = logger<JsonRpcHandler>()
+
+        // Parameter names
+        private const val PARAM_NAME = "name"
+        private const val PARAM_ARGUMENTS = "arguments"
+        private const val PARAM_PROJECT_PATH = "projectPath"
+
+        // Error messages
+        private const val ERROR_NO_PROJECT_OPEN = "no_project_open"
+        private const val ERROR_PROJECT_NOT_FOUND = "project_not_found"
+        private const val ERROR_MULTIPLE_PROJECTS = "multiple_projects_open"
+        private const val MSG_NO_PROJECT_OPEN = "No project is currently open in the IDE"
+        private const val MSG_MULTIPLE_PROJECTS = "Multiple projects are open. Please specify the 'projectPath' parameter."
+    }
+
+    suspend fun handleRequest(jsonString: String): String {
+        val request = try {
+            json.decodeFromString<JsonRpcRequest>(jsonString)
+        } catch (e: Exception) {
+            LOG.warn("Failed to parse JSON-RPC request", e)
+            return json.encodeToString(createParseErrorResponse())
         }
+
+        val response = try {
+            routeRequest(request)
+        } catch (e: Exception) {
+            LOG.error("Error processing request: ${request.method}", e)
+            createInternalErrorResponse(request.id, e.message ?: "Unknown error")
+        }
+
+        return json.encodeToString(response)
     }
 
     private suspend fun routeRequest(request: JsonRpcRequest): JsonRpcResponse {
         return when (request.method) {
             JsonRpcMethods.INITIALIZE -> processInitialize(request)
+            JsonRpcMethods.INITIALIZED -> processInitialized(request)
             JsonRpcMethods.TOOLS_LIST -> processToolsList(request)
             JsonRpcMethods.TOOLS_CALL -> processToolCall(request)
             JsonRpcMethods.PING -> processPing(request)
@@ -58,21 +65,37 @@ class JsonRpcHandler(
 
     private fun processInitialize(request: JsonRpcRequest): JsonRpcResponse {
         val result = InitializeResult(
-            serverInfo = serverService.getServerInfo()
+            protocolVersion = McpConstants.MCP_PROTOCOL_VERSION,
+            serverInfo = ServerInfo(
+                name = McpConstants.SERVER_NAME,
+                version = McpConstants.SERVER_VERSION,
+                description = McpConstants.SERVER_DESCRIPTION
+            ),
+            capabilities = ServerCapabilities(
+                tools = ToolCapability(listChanged = false)
+            )
         )
+
         return JsonRpcResponse(
             id = request.id,
-            result = mcpJson.encodeToJsonElement(result)
+            result = json.encodeToJsonElement(result)
+        )
+    }
+
+    private fun processInitialized(request: JsonRpcRequest): JsonRpcResponse {
+        return JsonRpcResponse(
+            id = request.id,
+            result = JsonObject(emptyMap())
         )
     }
 
     private fun processToolsList(request: JsonRpcRequest): JsonRpcResponse {
-        val result = ToolsListResult(
-            tools = toolRegistry.getToolDefinitions()
-        )
+        val tools = toolRegistry.getToolDefinitions()
+        val result = ToolsListResult(tools = tools)
+
         return JsonRpcResponse(
             id = request.id,
-            result = mcpJson.encodeToJsonElement(result)
+            result = json.encodeToJsonElement(result)
         )
     }
 
@@ -80,44 +103,43 @@ class JsonRpcHandler(
         val params = request.params
             ?: return createInvalidParamsResponse(request.id, "Missing params")
 
-        val toolName = params["name"]?.jsonPrimitive?.contentOrNull
+        val toolName = params[PARAM_NAME]?.jsonPrimitive?.contentOrNull
             ?: return createInvalidParamsResponse(request.id, "Missing tool name")
 
-        val arguments = params["arguments"]?.jsonObject ?: JsonObject(emptyMap())
+        val arguments = params[PARAM_ARGUMENTS]?.jsonObject ?: JsonObject(emptyMap())
 
         val tool = toolRegistry.getTool(toolName)
-            ?: return createToolNotFoundResponse(request.id, toolName)
+            ?: return createMethodNotFoundResponse(request.id, "Tool not found: $toolName")
 
-        // Resolve project from arguments
-        val projectPath = arguments["projectPath"]?.jsonPrimitive?.contentOrNull
-        val projectResult = ProjectUtils.resolveProject(projectPath)
+        // Extract optional project_path from arguments
+        val projectPath = arguments[PARAM_PROJECT_PATH]?.jsonPrimitive?.contentOrNull
 
-        val project = when (projectResult) {
-            is ProjectResolutionResult.Success -> projectResult.project
-            is ProjectResolutionResult.MultipleProjects -> {
-                return createMultipleProjectsErrorResponse(request.id, projectResult.projects)
-            }
-            is ProjectResolutionResult.NotFound -> {
-                return createProjectNotFoundResponse(request.id, projectResult.requestedPath)
-            }
-            is ProjectResolutionResult.NoProjectsOpen -> {
-                return createNoProjectsErrorResponse(request.id)
-            }
+        val projectResult = resolveProject(projectPath)
+        if (projectResult.isError) {
+            return JsonRpcResponse(
+                id = request.id,
+                result = json.encodeToJsonElement(projectResult.errorResult!!)
+            )
         }
 
-        // Execute tool
+        val project = projectResult.project!!
+
         return try {
             val result = tool.execute(project, arguments)
             JsonRpcResponse(
                 id = request.id,
-                result = mcpJson.encodeToJsonElement(result)
+                result = json.encodeToJsonElement(result)
             )
         } catch (e: Exception) {
-            log.error("Tool execution failed: ${tool.name}", e)
-            createErrorResponse(
-                request.id,
-                JsonRpcErrorCodes.INTERNAL_ERROR,
-                "Tool execution failed: ${e.message}"
+            LOG.error("Tool execution failed: $toolName", e)
+            JsonRpcResponse(
+                id = request.id,
+                result = json.encodeToJsonElement(
+                    ToolCallResult(
+                        content = listOf(ContentBlock.Text(text = e.message ?: "Unknown error")),
+                        isError = true
+                    )
+                )
             )
         }
     }
@@ -129,72 +151,125 @@ class JsonRpcHandler(
         )
     }
 
-    // Error response builders
-
-    private fun createParseErrorResponse(): JsonRpcResponse = JsonRpcResponse(
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.PARSE_ERROR,
-            message = "Parse error"
-        )
+    private data class ProjectResolutionResult(
+        val project: Project? = null,
+        val errorResult: ToolCallResult? = null,
+        val isError: Boolean = false
     )
 
-    private fun createMethodNotFoundResponse(id: JsonElement?, method: String): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.METHOD_NOT_FOUND,
-            message = "Method not found: $method"
-        )
-    )
+    private fun resolveProject(projectPath: String?): ProjectResolutionResult {
+        val openProjects = ProjectManager.getInstance().openProjects
+            .filter { !it.isDefault }
 
-    private fun createInvalidParamsResponse(id: JsonElement?, message: String): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.INVALID_PARAMS,
-            message = message
-        )
-    )
+        // No projects open
+        if (openProjects.isEmpty()) {
+            return ProjectResolutionResult(
+                isError = true,
+                errorResult = ToolCallResult(
+                    content = listOf(ContentBlock.Text(
+                        text = json.encodeToString(buildJsonObject {
+                            put("error", ERROR_NO_PROJECT_OPEN)
+                            put("message", MSG_NO_PROJECT_OPEN)
+                        })
+                    )),
+                    isError = true
+                )
+            )
+        }
 
-    private fun createToolNotFoundResponse(id: JsonElement?, toolName: String): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.METHOD_NOT_FOUND,
-            message = "Tool not found: $toolName"
-        )
-    )
+        // If project_path is provided, find matching project
+        if (projectPath != null) {
+            val matchingProject = openProjects.find { it.basePath == projectPath }
+            return if (matchingProject != null) {
+                ProjectResolutionResult(project = matchingProject)
+            } else {
+                ProjectResolutionResult(
+                    isError = true,
+                    errorResult = ToolCallResult(
+                        content = listOf(ContentBlock.Text(
+                            text = json.encodeToString(buildJsonObject {
+                                put("error", ERROR_PROJECT_NOT_FOUND)
+                                put("message", "Project not found: $projectPath")
+                                put("available_projects", buildJsonArray {
+                                    openProjects.forEach { proj ->
+                                        add(buildJsonObject {
+                                            put("name", proj.name)
+                                            put("path", proj.basePath ?: "")
+                                        })
+                                    }
+                                })
+                            })
+                        )),
+                        isError = true
+                    )
+                )
+            }
+        }
 
-    private fun createMultipleProjectsErrorResponse(
-        id: JsonElement?,
-        projects: List<com.github.hechtcarmel.jetbrainsdebuggermcpplugin.util.ProjectInfo>
-    ): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.MULTIPLE_PROJECTS,
-            message = "Multiple projects are open. Please specify 'projectPath' parameter.",
-            data = mcpJson.encodeToJsonElement(mapOf("open_projects" to projects))
-        )
-    )
+        // Only one project open - use it
+        if (openProjects.size == 1) {
+            return ProjectResolutionResult(project = openProjects.first())
+        }
 
-    private fun createProjectNotFoundResponse(id: JsonElement?, path: String): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.PROJECT_NOT_FOUND,
-            message = "Project not found: $path"
+        // Multiple projects open, no path specified - return error with list
+        return ProjectResolutionResult(
+            isError = true,
+            errorResult = ToolCallResult(
+                content = listOf(ContentBlock.Text(
+                    text = json.encodeToString(buildJsonObject {
+                        put("error", ERROR_MULTIPLE_PROJECTS)
+                        put("message", MSG_MULTIPLE_PROJECTS)
+                        put("available_projects", buildJsonArray {
+                            openProjects.forEach { proj ->
+                                add(buildJsonObject {
+                                    put("name", proj.name)
+                                    put("path", proj.basePath ?: "")
+                                })
+                            }
+                        })
+                    })
+                )),
+                isError = true
+            )
         )
-    )
+    }
 
-    private fun createNoProjectsErrorResponse(id: JsonElement?): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = JsonRpcErrorCodes.PROJECT_NOT_FOUND,
-            message = "No projects are open"
+    private fun createParseErrorResponse(): JsonRpcResponse {
+        return JsonRpcResponse(
+            error = JsonRpcError(
+                code = JsonRpcErrorCodes.PARSE_ERROR,
+                message = "Parse error"
+            )
         )
-    )
+    }
 
-    private fun createErrorResponse(id: JsonElement?, code: Int, message: String): JsonRpcResponse = JsonRpcResponse(
-        id = id,
-        error = JsonRpcError(
-            code = code,
-            message = message
+    private fun createInvalidParamsResponse(id: JsonElement?, message: String): JsonRpcResponse {
+        return JsonRpcResponse(
+            id = id,
+            error = JsonRpcError(
+                code = JsonRpcErrorCodes.INVALID_PARAMS,
+                message = message
+            )
         )
-    )
+    }
+
+    private fun createMethodNotFoundResponse(id: JsonElement?, method: String): JsonRpcResponse {
+        return JsonRpcResponse(
+            id = id,
+            error = JsonRpcError(
+                code = JsonRpcErrorCodes.METHOD_NOT_FOUND,
+                message = "Method not found: $method"
+            )
+        )
+    }
+
+    private fun createInternalErrorResponse(id: JsonElement?, message: String): JsonRpcResponse {
+        return JsonRpcResponse(
+            id = id,
+            error = JsonRpcError(
+                code = JsonRpcErrorCodes.INTERNAL_ERROR,
+                message = message
+            )
+        )
+    }
 }

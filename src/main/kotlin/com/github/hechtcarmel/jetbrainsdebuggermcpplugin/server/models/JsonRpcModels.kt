@@ -53,7 +53,7 @@ object JsonRpcErrorCodes {
 
 object JsonRpcMethods {
     const val INITIALIZE = "initialize"
-    const val INITIALIZED = "notifications/initialized"
+    const val INITIALIZED = "initialized"
     const val TOOLS_LIST = "tools/list"
     const val TOOLS_CALL = "tools/call"
     const val PING = "ping"

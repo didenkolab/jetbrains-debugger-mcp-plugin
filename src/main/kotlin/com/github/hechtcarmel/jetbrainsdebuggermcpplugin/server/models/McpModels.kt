@@ -1,23 +1,26 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonClassDiscriminator
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class ServerInfo(
     val name: String,
-    val version: String
+    val version: String,
+    val description: String? = null
 )
 
 @Serializable
 data class ServerCapabilities(
-    val tools: ToolsCapability? = ToolsCapability()
+    val tools: ToolCapability? = ToolCapability()
 )
 
 @Serializable
-data class ToolsCapability(
-    val listChanged: Boolean? = false
+data class ToolCapability(
+    val listChanged: Boolean = false
 )
 
 @Serializable
@@ -40,17 +43,24 @@ data class ToolsListResult(
 )
 
 @Serializable
+data class ToolCallParams(
+    val name: String,
+    val arguments: JsonObject? = null
+)
+
+@Serializable
 data class ToolCallResult(
     val content: List<ContentBlock>,
     val isError: Boolean = false
 )
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
+@JsonClassDiscriminator("type")
 sealed class ContentBlock {
     @Serializable
     @SerialName("text")
     data class Text(
-        val type: String = "text",
         val text: String
     ) : ContentBlock()
 }

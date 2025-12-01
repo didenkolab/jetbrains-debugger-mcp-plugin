@@ -137,12 +137,7 @@ class McpRequestHandler : HttpRequestHandler() {
                 // Send response back on Netty event loop thread
                 context.channel().eventLoop().execute {
                     if (context.channel().isActive) {
-                        if (response != null) {
-                            sendJsonResponse(context, HttpResponseStatus.OK, response)
-                        } else {
-                            // For notifications, send 202 Accepted with empty body
-                            sendEmptyResponse(context, HttpResponseStatus.ACCEPTED)
-                        }
+                        sendJsonResponse(context, HttpResponseStatus.OK, response)
                     }
                 }
             } catch (e: Exception) {
@@ -196,19 +191,6 @@ class McpRequestHandler : HttpRequestHandler() {
         }
         addCorsHeaders(response)
 
-        context.writeAndFlush(response)
-    }
-
-    /**
-     * Sends an empty response.
-     */
-    private fun sendEmptyResponse(context: ChannelHandlerContext, status: HttpResponseStatus) {
-        val response = DefaultFullHttpResponse(
-            HttpVersion.HTTP_1_1,
-            status
-        )
-        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0)
-        addCorsHeaders(response)
         context.writeAndFlush(response)
     }
 
