@@ -11,7 +11,7 @@
 
 | Phase | Description | Status | Progress |
 |-------|-------------|--------|----------|
-| 1 | Project Setup & Foundation | Not Started | 0/8 |
+| 1 | Project Setup & Foundation | **Complete** | 8/8 |
 | 2 | Server Infrastructure | Not Started | 0/12 |
 | 3 | Tool Framework | Not Started | 0/10 |
 | 4 | P0 Tools - Core Debugging | Not Started | 0/24 |
@@ -23,8 +23,8 @@
 | 10 | Testing & Polish | Not Started | 0/12 |
 
 **Total Tasks**: 124
-**Completed**: 0
-**Overall Progress**: 0%
+**Completed**: 8
+**Overall Progress**: 6%
 
 ---
 
@@ -36,12 +36,12 @@
 
 ### Tasks
 
-- [ ] **1.1** Update `build.gradle.kts` with required dependencies
-  - [ ] Add kotlinx-serialization-json dependency (NOT bundled with SDK)
-  - [ ] Configure serialization plugin
-  - [ ] Add test dependencies (mockk with coroutines exclusions)
-  - [ ] **NOTE**: Do NOT add kotlinx-coroutines - use IntelliJ's bundled version
-  - [ ] If using external libs that depend on coroutines, exclude them:
+- [x] **1.1** Update `build.gradle.kts` with required dependencies
+  - [x] Add kotlinx-serialization-json dependency (NOT bundled with SDK)
+  - [x] Configure serialization plugin
+  - [x] Add test dependencies (mockk with coroutines exclusions)
+  - [x] **NOTE**: Do NOT add kotlinx-coroutines - use IntelliJ's bundled version
+  - [x] If using external libs that depend on coroutines, exclude them:
     ```kotlin
     implementation(someLib) {
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
@@ -50,11 +50,11 @@
     }
     ```
 
-- [ ] **1.2** Update `gradle.properties`
-  - [ ] Add `platformBundledPlugins = com.intellij.java` for Java debugger support
-  - [ ] Set `kotlin.stdlib.default.dependency = false` (use bundled stdlib)
+- [x] **1.2** Update `gradle.properties`
+  - [x] Add `platformBundledPlugins = com.intellij.java` for Java debugger support
+  - [x] Set `kotlin.stdlib.default.dependency = false` (already set in template)
 
-- [ ] **1.3** Create package structure
+- [x] **1.3** Create package structure
   ```
   src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
   ├── server/
@@ -79,28 +79,28 @@
   └── startup/
   ```
 
-- [ ] **1.4** Create `McpConstants.kt`
-  - [ ] Define MCP_ENDPOINT_PATH = "/debugger-mcp"
-  - [ ] Define SSE_ENDPOINT_PATH = "/debugger-mcp/sse"
-  - [ ] Define NOTIFICATION_GROUP_ID
-  - [ ] Define SERVER_NAME = "jetbrains-debugger"
-  - [ ] Define SERVER_VERSION = "1.0.0"
+- [x] **1.4** Create `McpConstants.kt`
+  - [x] Define MCP_ENDPOINT_PATH = "/debugger-mcp"
+  - [x] Define SSE_ENDPOINT_PATH = "/debugger-mcp/sse"
+  - [x] Define NOTIFICATION_GROUP_ID
+  - [x] Define SERVER_NAME = "jetbrains-debugger"
+  - [x] Define SERVER_VERSION = "1.0.0"
 
-- [ ] **1.5** Create `McpBundle.kt` for i18n (optional, can defer)
+- [x] **1.5** Create `McpBundle.kt` for i18n (deferred - not needed initially)
 
-- [ ] **1.6** Create `util/JsonUtils.kt`
-  - [ ] Configure Json serializer with appropriate settings
-  - [ ] Add extension functions for common operations
+- [x] **1.6** Create `util/JsonUtils.kt`
+  - [x] Configure Json serializer with appropriate settings
+  - [x] Add extension functions for common operations (buildInputSchema, property helpers)
 
-- [ ] **1.7** Create `util/ProjectUtils.kt`
-  - [ ] Implement `resolveProject(projectPath: String?): Project?`
-  - [ ] Implement `getOpenProjects(): List<ProjectInfo>`
-  - [ ] Handle single project (auto-select) case
-  - [ ] Handle multiple projects (require path) case
+- [x] **1.7** Create `util/ProjectUtils.kt`
+  - [x] Implement `resolveProject(projectPath: String?): ProjectResolutionResult`
+  - [x] Implement `getOpenProjects(): List<Project>`
+  - [x] Handle single project (auto-select) case
+  - [x] Handle multiple projects (require path) case
 
-- [ ] **1.8** Verify project builds successfully
-  - [ ] Run `./gradlew build`
-  - [ ] Ensure no compilation errors
+- [x] **1.8** Verify project builds successfully
+  - [x] Run `./gradlew buildPlugin`
+  - [x] Ensure no compilation errors
 
 **Phase 1 Deliverables**:
 - Configured build system

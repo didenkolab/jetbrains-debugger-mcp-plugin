@@ -1,15 +1,18 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.hechtcarmel.jetbrainsdebuggermcpplugin</id>
-    <name>jetbrains-debugger-mcp-plugin</name>
+    <name>Debugger MCP Server</name>
     <vendor>hechtcarmel</vendor>
 
+    <!-- Required platform dependency -->
     <depends>com.intellij.modules.platform</depends>
-
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <!-- Required for XDebugger API -->
+    <depends>com.intellij.modules.xdebugger</depends>
+    <!-- Optional Java debugger support -->
+    <depends optional="true" config-file="java-debugger.xml">com.intellij.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
-        <postStartupActivity implementation="com.github.hechtcarmel.jetbrainsdebuggermcpplugin.startup.MyProjectActivity" />
+        <!-- Notification group for plugin messages -->
+        <notificationGroup id="Debugger MCP Server" displayType="BALLOON"/>
     </extensions>
 </idea-plugin>
