@@ -25,15 +25,158 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 
 ## 2. Functional Requirements
 
-### 2.1 Debug Session Management
+### 2.0 Common Parameters: Project Resolution
 
-#### FR-2.1.1: List Debug Sessions
-**Description:** List all active debug sessions in the current project.
+#### Multi-Project Handling
+
+All tools accept an optional `projectPath` parameter to specify which project to operate on when multiple projects are open in the IDE.
+
+**Parameter:**
+```json
+{
+  "projectPath": "/absolute/path/to/project"
+}
+```
+
+**Behavior:**
+| Scenario | Behavior |
+|----------|----------|
+| Single project open, `projectPath` omitted | Use the single open project |
+| Single project open, `projectPath` provided | Validate and use if matches, error if not |
+| Multiple projects open, `projectPath` omitted | Return error with list of open projects |
+| Multiple projects open, `projectPath` provided | Use specified project, error if not found |
+
+**Error Response (Multiple Projects, No projectPath):**
+```json
+{
+  "error": "multiple_projects_open",
+  "message": "Multiple projects are open. Please specify 'projectPath' parameter.",
+  "open_projects": [
+    {
+      "name": "my-backend",
+      "path": "/Users/dev/projects/my-backend"
+    },
+    {
+      "name": "my-frontend",
+      "path": "/Users/dev/projects/my-frontend"
+    }
+  ]
+}
+```
+
+**Implementation Notes:**
+- Use `ProjectManager.getInstance().openProjects` to get all open projects
+- Match `projectPath` against `project.basePath`
+- This pattern follows the existing JetBrains MCP Server conventions
+
+---
+
+### 2.1 Run Configuration Management
+
+#### FR-2.1.1: List Run Configurations
+**Description:** List all available run configurations in the project.
 
 **Input:**
 ```json
 {
-  "name": "list_debug_sessions"
+  "name": "list_run_configurations",
+  "arguments": {
+    "projectPath": "/path/to/project"
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "run_configurations": [
+    {
+      "name": "MyApplication",
+      "type": "Application",
+      "type_id": "Application",
+      "is_temporary": false,
+      "can_run": true,
+      "can_debug": true,
+      "folder": "backend",
+      "description": "Main application entry point"
+    },
+    {
+      "name": "All Tests",
+      "type": "JUnit",
+      "type_id": "JUnit",
+      "is_temporary": false,
+      "can_run": true,
+      "can_debug": true,
+      "folder": null,
+      "description": null
+    },
+    {
+      "name": "npm start",
+      "type": "npm",
+      "type_id": "js.build_tools.npm",
+      "is_temporary": false,
+      "can_run": true,
+      "can_debug": false,
+      "folder": "scripts",
+      "description": "Start development server"
+    }
+  ]
+}
+```
+
+**Acceptance Criteria:**
+- Returns all RunConfiguration instances from RunManager
+- Includes configuration type for filtering
+- Indicates if configuration supports debugging (has ProgramRunner for Debug executor)
+- Includes folder organization if present
+- Sorted alphabetically by name
+
+#### FR-2.1.2: Run Configuration (Without Debugging)
+**Description:** Execute a run configuration without debugging.
+
+**Input:**
+```json
+{
+  "name": "run_configuration",
+  "arguments": {
+    "projectPath": "/path/to/project",
+    "configuration_name": "MyApplication",
+    "wait_for_completion": false
+  }
+}
+```
+
+**Output:**
+```json
+{
+  "status": "started|completed|failed",
+  "process_id": 12345,
+  "exit_code": null,
+  "message": "Run configuration 'MyApplication' started"
+}
+```
+
+**Acceptance Criteria:**
+- Executes using DefaultRunExecutor (not Debug)
+- Returns error if configuration not found
+- Optional `wait_for_completion` to block until process exits
+- Returns exit code if `wait_for_completion` is true
+- Requires user confirmation unless "brave mode" enabled
+
+---
+
+### 2.2 Debug Session Management
+
+#### FR-2.2.1: List Debug Sessions
+**Description:** List all active debug sessions in the project (or all projects if multiple are open).
+
+**Input:**
+```json
+{
+  "name": "list_debug_sessions",
+  "arguments": {
+    "projectPath": "/path/to/project"
+  }
 }
 ```
 
@@ -59,7 +202,7 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 - Indicates which session is currently focused
 - Returns empty array if no sessions exist
 
-#### FR-2.1.2: Start Debug Session
+#### FR-2.2.2: Start Debug Session
 **Description:** Start a debug session for a specified run configuration.
 
 **Input:**
@@ -67,7 +210,8 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 {
   "name": "start_debug_session",
   "arguments": {
-    "run_configuration": "MyApplication",
+    "projectPath": "/path/to/project",
+    "configuration_name": "MyApplication",
     "wait_for_pause": true
   }
 }
@@ -84,12 +228,15 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 
 **Acceptance Criteria:**
 - Starts debug session using DefaultDebugExecutor
-- Supports named run configurations
+- Configuration name must match one from `list_run_configurations`
+- Configuration must support debugging (`can_debug: true`)
 - Optional parameter to wait until first breakpoint hit
-- Returns error if run configuration not found
+- Returns error if run configuration not found or doesn't support debugging
 - Requires user confirmation unless "brave mode" enabled
 
-#### FR-2.1.3: Stop Debug Session
+**Note:** Use `list_run_configurations` first to discover available configurations and verify they support debugging.
+
+#### FR-2.2.3: Stop Debug Session
 **Description:** Stop an active debug session.
 
 **Input:**
@@ -97,6 +244,7 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 {
   "name": "stop_debug_session",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid"
   }
 }
@@ -104,56 +252,183 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 
 **Acceptance Criteria:**
 - Terminates the specified debug session
-- If session_id omitted, stops current session
+- If session_id omitted, stops current session in the project
 - Returns error if session not found
 
-#### FR-2.1.4: Get Debug Session Status
-**Description:** Get detailed status of a debug session.
+#### FR-2.2.4: Get Debug Session Status
+**Description:** Get comprehensive status of a debug session including variables, watches, stack summary, and source context. This is the primary tool for understanding the current debug state in a single call.
 
 **Input:**
 ```json
 {
   "name": "get_debug_session_status",
   "arguments": {
-    "session_id": "session_uuid"
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
+    "include_variables": true,
+    "include_source_context": true,
+    "source_context_lines": 5,
+    "max_stack_frames": 5
   }
 }
 ```
+
+**Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `projectPath` | No | Project path (required if multiple projects open) |
+| `session_id` | No | Debug session ID (uses current session if omitted) |
+| `include_variables` | No | Include variables from current frame. Default: true |
+| `include_source_context` | No | Include source code around current line. Default: true |
+| `source_context_lines` | No | Lines of context above/below current line. Default: 5 |
+| `max_stack_frames` | No | Maximum stack frames in summary. Default: 5 |
 
 **Output:**
 ```json
 {
   "session_id": "session_uuid",
+  "name": "MyApplication",
   "state": "paused",
-  "paused_at": {
+  "paused_reason": "breakpoint",
+
+  "current_location": {
     "file": "/path/to/File.java",
     "line": 42,
     "class": "com.example.MyClass",
-    "method": "myMethod"
+    "method": "myMethod",
+    "signature": "myMethod(int, String)"
   },
-  "breakpoints_hit": ["bp_id_1"],
-  "thread_count": 5,
-  "current_thread": "main"
+
+  "breakpoint_hit": {
+    "id": "bp_uuid",
+    "condition": "x > 10",
+    "condition_result": true,
+    "hit_count": 3
+  },
+
+  "stack_summary": [
+    {
+      "index": 0,
+      "file": "/path/to/File.java",
+      "line": 42,
+      "class": "com.example.MyClass",
+      "method": "myMethod",
+      "is_current": true
+    },
+    {
+      "index": 1,
+      "file": "/path/to/Caller.java",
+      "line": 15,
+      "class": "com.example.Caller",
+      "method": "invoke"
+    }
+  ],
+  "total_stack_depth": 8,
+
+  "variables": [
+    {
+      "name": "x",
+      "value": "42",
+      "type": "int",
+      "has_children": false
+    },
+    {
+      "name": "items",
+      "value": "ArrayList@12345",
+      "type": "java.util.ArrayList",
+      "has_children": true,
+      "id": "var_uuid"
+    }
+  ],
+
+  "watches": [
+    {
+      "id": "watch_uuid",
+      "expression": "items.size()",
+      "value": "3",
+      "type": "int",
+      "error": null
+    },
+    {
+      "id": "watch_uuid2",
+      "expression": "user.getName()",
+      "value": null,
+      "type": null,
+      "error": "Cannot evaluate: user is null"
+    }
+  ],
+
+  "source_context": {
+    "file": "/path/to/File.java",
+    "start_line": 37,
+    "end_line": 47,
+    "current_line": 42,
+    "lines": [
+      { "number": 37, "content": "    public int myMethod(int x, String s) {" },
+      { "number": 38, "content": "        int result = 0;" },
+      { "number": 39, "content": "        for (Item item : items) {" },
+      { "number": 40, "content": "            result += item.getValue();" },
+      { "number": 41, "content": "        }" },
+      { "number": 42, "content": ">>>     return result * x;", "is_current": true },
+      { "number": 43, "content": "    }" },
+      { "number": 44, "content": "" },
+      { "number": 45, "content": "    private void helper() {" },
+      { "number": 46, "content": "        // ..." },
+      { "number": 47, "content": "    }" }
+    ],
+    "breakpoints_in_view": [42]
+  },
+
+  "current_thread": {
+    "id": "thread_1",
+    "name": "main",
+    "state": "paused"
+  },
+  "thread_count": 5
 }
 ```
 
+**Acceptance Criteria:**
+- Returns comprehensive debug state in a single call
+- Includes current location with class/method information
+- Shows breakpoint that was hit (if applicable) with condition details
+- Provides stack summary (top N frames) with total depth
+- Includes all variables visible in current frame (when `include_variables: true`)
+- Includes all watch expressions with current values or errors
+- Provides source code context around current line (when `include_source_context: true`)
+- Shows current thread information and total thread count
+- `paused_reason` indicates why execution stopped: `breakpoint`, `step`, `pause`, `exception`
+- Handles running state gracefully (limited info when not paused)
+
+**Note:** This rich response reduces round-trips for AI agents. Instead of calling multiple tools (`get_variables`, `get_stack_trace`, `get_source_context`), agents can get all essential debug context in one call.
+
 ---
 
-### 2.2 Breakpoint Management
+### 2.3 Breakpoint Management
 
-#### FR-2.2.1: List Breakpoints
-**Description:** List all breakpoints in the current project.
+#### FR-2.3.1: List Breakpoints
+**Description:** List breakpoints in the project. Can list all breakpoints or filter by file.
 
 **Input:**
 ```json
 {
   "name": "list_breakpoints",
   "arguments": {
+    "projectPath": "/path/to/project",
     "file_path": "/path/to/File.java",
+    "type": "line|exception|method|field|all",
     "enabled_only": false
   }
 }
 ```
+
+**Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `projectPath` | No | Project path (required if multiple projects open) |
+| `file_path` | No | Filter breakpoints to specific file. If omitted, returns ALL breakpoints in project |
+| `type` | No | Filter by breakpoint type. Default: "all" |
+| `enabled_only` | No | If true, only return enabled breakpoints. Default: false |
 
 **Output:**
 ```json
@@ -161,27 +436,41 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
   "breakpoints": [
     {
       "id": "bp_uuid",
-      "type": "line|method|exception|field",
+      "type": "line",
       "file": "/path/to/File.java",
       "line": 42,
       "enabled": true,
       "condition": "x > 10",
       "log_message": null,
-      "suspend_policy": "all|thread|none",
+      "suspend_policy": "all",
       "hit_count": 0,
       "temporary": false
+    },
+    {
+      "id": "bp_uuid2",
+      "type": "exception",
+      "exception_class": "java.lang.NullPointerException",
+      "file": null,
+      "line": null,
+      "enabled": true,
+      "caught": true,
+      "uncaught": true,
+      "condition": null
     }
-  ]
+  ],
+  "total_count": 2
 }
 ```
 
 **Acceptance Criteria:**
-- Returns all XBreakpoint instances
-- Optional filtering by file path
+- Uses `XBreakpointManager.getAllBreakpoints()` when no filters specified
+- Optional filtering by file path using `findBreakpointsAtLine` or iteration
+- Optional filtering by breakpoint type
 - Optional filtering by enabled state
-- Includes breakpoint metadata (condition, log message)
+- Includes breakpoint metadata (condition, log message, exception settings)
+- Returns empty array if no breakpoints exist
 
-#### FR-2.2.2: Set Line Breakpoint
+#### FR-2.3.2: Set Line Breakpoint
 **Description:** Add a line breakpoint at a specified location.
 
 **Input:**
@@ -189,6 +478,7 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 {
   "name": "set_breakpoint",
   "arguments": {
+    "projectPath": "/path/to/project",
     "file_path": "/path/to/File.java",
     "line": 42,
     "condition": "x > 10",
@@ -217,23 +507,26 @@ Extend the existing JetBrains MCP Server infrastructure (built into IntelliJ 202
 - Returns appropriate error for invalid locations
 - Verifies breakpoint can be hit (valid code location)
 
-#### FR-2.2.3: Remove Breakpoint
+#### FR-2.3.3: Remove Breakpoint
 **Description:** Remove a breakpoint by ID or location.
 
-**Input:**
+**Input (by ID):**
 ```json
 {
   "name": "remove_breakpoint",
   "arguments": {
+    "projectPath": "/path/to/project",
     "breakpoint_id": "bp_uuid"
   }
 }
 ```
-OR
+
+**Input (by location):**
 ```json
 {
   "name": "remove_breakpoint",
   "arguments": {
+    "projectPath": "/path/to/project",
     "file_path": "/path/to/File.java",
     "line": 42
   }
@@ -243,23 +536,9 @@ OR
 **Acceptance Criteria:**
 - Removes breakpoint by ID or file+line
 - Returns success even if breakpoint doesn't exist (idempotent)
-- Supports removing all breakpoints in a file
+- Supports removing all breakpoints in a file when only `file_path` provided
 
-#### FR-2.2.4: Toggle Breakpoint
-**Description:** Enable or disable a breakpoint without removing it.
-
-**Input:**
-```json
-{
-  "name": "toggle_breakpoint",
-  "arguments": {
-    "breakpoint_id": "bp_uuid",
-    "enabled": false
-  }
-}
-```
-
-#### FR-2.2.5: Set Exception Breakpoint
+#### FR-2.3.4: Set Exception Breakpoint
 **Description:** Set a breakpoint that triggers on exceptions.
 
 **Input:**
@@ -267,6 +546,7 @@ OR
 {
   "name": "set_exception_breakpoint",
   "arguments": {
+    "projectPath": "/path/to/project",
     "exception_class": "java.lang.NullPointerException",
     "caught": true,
     "uncaught": true,
@@ -277,9 +557,9 @@ OR
 
 ---
 
-### 2.3 Execution Control
+### 2.4 Execution Control
 
-#### FR-2.3.1: Resume Execution
+#### FR-2.4.1: Resume Execution
 **Description:** Resume execution of a paused debug session.
 
 **Input:**
@@ -287,6 +567,7 @@ OR
 {
   "name": "resume",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid"
   }
 }
@@ -294,10 +575,10 @@ OR
 
 **Acceptance Criteria:**
 - Resumes execution of paused session
-- If session_id omitted, resumes current session
+- If session_id omitted, resumes current session in the project
 - Returns error if session not paused
 
-#### FR-2.3.2: Pause Execution
+#### FR-2.4.2: Pause Execution
 **Description:** Pause a running debug session.
 
 **Input:**
@@ -305,12 +586,13 @@ OR
 {
   "name": "pause",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid"
   }
 }
 ```
 
-#### FR-2.3.3: Step Over
+#### FR-2.4.3: Step Over
 **Description:** Execute next line, stepping over method calls.
 
 **Input:**
@@ -318,6 +600,7 @@ OR
 {
   "name": "step_over",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid",
     "ignore_breakpoints": false
   }
@@ -336,7 +619,7 @@ OR
 }
 ```
 
-#### FR-2.3.4: Step Into
+#### FR-2.4.4: Step Into
 **Description:** Execute next line, stepping into method calls.
 
 **Input:**
@@ -344,6 +627,7 @@ OR
 {
   "name": "step_into",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid",
     "force": false
   }
@@ -354,7 +638,7 @@ OR
 - Steps into next method call
 - `force` parameter enables stepping into library code
 
-#### FR-2.3.5: Step Out
+#### FR-2.4.5: Step Out
 **Description:** Continue execution until current method returns.
 
 **Input:**
@@ -362,12 +646,13 @@ OR
 {
   "name": "step_out",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid"
   }
 }
 ```
 
-#### FR-2.3.6: Run to Cursor/Line
+#### FR-2.4.6: Run to Cursor/Line
 **Description:** Continue execution until a specific line is reached.
 
 **Input:**
@@ -375,6 +660,8 @@ OR
 {
   "name": "run_to_line",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "file_path": "/path/to/File.java",
     "line": 50,
     "ignore_breakpoints": false
@@ -384,9 +671,9 @@ OR
 
 ---
 
-### 2.4 Stack Frame Navigation
+### 2.5 Stack Frame Navigation
 
-#### FR-2.4.1: Get Stack Trace
+#### FR-2.5.1: Get Stack Trace
 **Description:** Get the current call stack.
 
 **Input:**
@@ -394,6 +681,7 @@ OR
 {
   "name": "get_stack_trace",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid",
     "thread_name": "main",
     "max_frames": 50
@@ -434,7 +722,7 @@ OR
 - Identifies library frames
 - Supports limiting number of frames
 
-#### FR-2.4.2: Select Stack Frame
+#### FR-2.5.2: Select Stack Frame
 **Description:** Change the current stack frame context.
 
 **Input:**
@@ -442,6 +730,8 @@ OR
 {
   "name": "select_stack_frame",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "frame_index": 2
   }
 }
@@ -452,7 +742,7 @@ OR
 - Updates variables view context
 - Enables evaluation in frame context
 
-#### FR-2.4.3: List Threads
+#### FR-2.5.3: List Threads
 **Description:** List all threads in the debugged process.
 
 **Input:**
@@ -460,6 +750,7 @@ OR
 {
   "name": "list_threads",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid"
   }
 }
@@ -482,9 +773,9 @@ OR
 
 ---
 
-### 2.5 Variable Inspection
+### 2.6 Variable Inspection
 
-#### FR-2.5.1: Get Variables
+#### FR-2.6.1: Get Variables
 **Description:** Get variables visible in the current stack frame.
 
 **Input:**
@@ -492,6 +783,7 @@ OR
 {
   "name": "get_variables",
   "arguments": {
+    "projectPath": "/path/to/project",
     "session_id": "session_uuid",
     "frame_index": 0,
     "scope": "local|arguments|this|all"
@@ -527,7 +819,7 @@ OR
 - Indicates if variable has expandable children
 - Handles large objects gracefully (truncation)
 
-#### FR-2.5.2: Expand Variable
+#### FR-2.6.2: Expand Variable
 **Description:** Get child properties of an object variable.
 
 **Input:**
@@ -535,6 +827,8 @@ OR
 {
   "name": "expand_variable",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "variable_id": "var_uuid",
     "path": "myObject.innerField"
   }
@@ -555,7 +849,7 @@ OR
 }
 ```
 
-#### FR-2.5.3: Set Variable Value
+#### FR-2.6.3: Set Variable Value
 **Description:** Modify the value of a variable during debugging.
 
 **Input:**
@@ -563,6 +857,8 @@ OR
 {
   "name": "set_variable",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "variable_id": "var_uuid",
     "new_value": "100"
   }
@@ -577,16 +873,18 @@ OR
 
 ---
 
-### 2.6 Expression Evaluation
+### 2.7 Expression Evaluation
 
-#### FR-2.6.1: Evaluate Expression
-**Description:** Evaluate an expression in the current debug context.
+#### FR-2.7.1: Evaluate
+**Description:** Evaluate an expression or code fragment in the current debug context.
 
 **Input:**
 ```json
 {
-  "name": "evaluate_expression",
+  "name": "evaluate",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "expression": "myVariable + 10",
     "frame_index": 0,
     "allow_side_effects": false
@@ -594,72 +892,55 @@ OR
 }
 ```
 
+**Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `projectPath` | No | Project path (required if multiple projects open) |
+| `session_id` | No | Debug session ID (uses current session if omitted) |
+| `expression` | Yes | Expression or code fragment to evaluate. Can be single expression or multi-line code |
+| `frame_index` | No | Stack frame context for evaluation. Default: 0 (current frame) |
+| `allow_side_effects` | No | Allow method calls and state modifications. Default: false |
+
 **Output:**
 ```json
 {
   "result": {
     "value": "52",
     "type": "int",
-    "has_children": false
+    "has_children": false,
+    "id": "result_uuid"
   },
   "error": null
 }
 ```
 
 **Acceptance Criteria:**
-- Evaluates arbitrary expressions in frame context
-- `allow_side_effects` controls method invocation
+- Evaluates single expressions (e.g., `myVariable + 10`)
+- Evaluates multi-line code fragments (e.g., `int sum = 0; for (...) { ... }; return sum;`)
+- `allow_side_effects` controls whether method invocations and state changes are permitted
 - Returns structured result with type information
-- Handles evaluation errors gracefully
+- For objects, returns `has_children: true` and `id` for use with `expand_variable`
+- Handles evaluation errors gracefully with descriptive error messages
 
-#### FR-2.6.2: Evaluate Code Fragment
-**Description:** Execute a multi-line code fragment.
-
-**Input:**
+**Examples:**
 ```json
-{
-  "name": "evaluate_code_fragment",
-  "arguments": {
-    "code": "int sum = 0;\nfor (int i : list) { sum += i; }\nreturn sum;",
-    "frame_index": 0
-  }
-}
-```
+// Simple expression
+{ "expression": "items.size()" }
 
-**Acceptance Criteria:**
-- Supports multi-statement evaluation
-- Returns result of last expression/statement
-- Requires explicit `allow_side_effects: true`
+// Expression with side effects (method call that modifies state)
+{ "expression": "list.add(newItem)", "allow_side_effects": true }
+
+// Multi-line code fragment
+{ "expression": "int sum = 0;\nfor (int x : values) { sum += x; }\nreturn sum;", "allow_side_effects": true }
+```
 
 ---
 
-### 2.7 Watch Management
+### 2.8 Watch Management
 
-#### FR-2.7.1: List Watches
-**Description:** List all watch expressions.
+**Note:** Watch values are automatically included in `get_debug_session_status` response. Use these tools to manage the watch list.
 
-**Input:**
-```json
-{
-  "name": "list_watches"
-}
-```
-
-**Output:**
-```json
-{
-  "watches": [
-    {
-      "id": "watch_uuid",
-      "expression": "myObject.getValue()",
-      "current_value": "42",
-      "error": null
-    }
-  ]
-}
-```
-
-#### FR-2.7.2: Add Watch
+#### FR-2.8.1: Add Watch
 **Description:** Add a watch expression.
 
 **Input:**
@@ -667,12 +948,14 @@ OR
 {
   "name": "add_watch",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "expression": "myObject.getValue()"
   }
 }
 ```
 
-#### FR-2.7.3: Remove Watch
+#### FR-2.8.3: Remove Watch
 **Description:** Remove a watch expression.
 
 **Input:**
@@ -680,6 +963,8 @@ OR
 {
   "name": "remove_watch",
   "arguments": {
+    "projectPath": "/path/to/project",
+    "session_id": "session_uuid",
     "watch_id": "watch_uuid"
   }
 }
@@ -687,9 +972,9 @@ OR
 
 ---
 
-### 2.8 Source Navigation
+### 2.9 Source Navigation
 
-#### FR-2.8.1: Get Source Context
+#### FR-2.9.1: Get Source Context
 **Description:** Get source code around the current execution point.
 
 **Input:**
@@ -697,6 +982,7 @@ OR
 {
   "name": "get_source_context",
   "arguments": {
+    "projectPath": "/path/to/project",
     "file_path": "/path/to/File.java",
     "line": 42,
     "context_lines": 10
@@ -1012,14 +1298,15 @@ Tools will be registered using the JetBrains MCP Server extension point:
 
 | Tool Name | Category | Priority |
 |-----------|----------|----------|
-| `list_debug_sessions` | Session | P0 |
-| `start_debug_session` | Session | P0 |
-| `stop_debug_session` | Session | P0 |
-| `get_debug_session_status` | Session | P0 |
+| `list_run_configurations` | Run Configs | P0 |
+| `run_configuration` | Run Configs | P0 |
+| `list_debug_sessions` | Debug Session | P0 |
+| `start_debug_session` | Debug Session | P0 |
+| `stop_debug_session` | Debug Session | P0 |
+| `get_debug_session_status` | Debug Session | P0 |
 | `list_breakpoints` | Breakpoints | P0 |
 | `set_breakpoint` | Breakpoints | P0 |
 | `remove_breakpoint` | Breakpoints | P0 |
-| `toggle_breakpoint` | Breakpoints | P1 |
 | `set_exception_breakpoint` | Breakpoints | P2 |
 | `resume` | Execution | P0 |
 | `pause` | Execution | P0 |
@@ -1033,52 +1320,143 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | `get_variables` | Variables | P0 |
 | `expand_variable` | Variables | P1 |
 | `set_variable` | Variables | P2 |
-| `evaluate_expression` | Evaluation | P0 |
-| `evaluate_code_fragment` | Evaluation | P2 |
-| `list_watches` | Watches | P2 |
+| `evaluate` | Evaluation | P0 |
 | `add_watch` | Watches | P2 |
 | `remove_watch` | Watches | P2 |
 | `get_source_context` | Navigation | P1 |
 
+**Total Tools: 26**
+
 **Priority Legend:**
-- P0: Must have for MVP
-- P1: Important for usability
-- P2: Nice to have
+- P0: Must have for MVP (16 tools)
+- P1: Important for usability (6 tools)
+- P2: Nice to have (4 tools)
+
+**Consolidation Notes:**
+- `toggle_breakpoint` removed (use `set_breakpoint` / `remove_breakpoint`)
+- `evaluate_expression` and `evaluate_code_fragment` merged into `evaluate`
+- `list_watches` removed (watches included in `get_debug_session_status`)
 
 ---
 
 ## Appendix B: Example AI Agent Workflow
 
+### Example 1: Debugging a Calculation Bug
+
 ```
 Agent: I need to debug why the calculateTotal function returns wrong values.
 
-1. Agent: set_breakpoint(file="/src/Calculator.java", line=42)
+1. Agent: list_run_configurations(projectPath="/Users/dev/calculator")
+   → Shows available configurations:
+     - "CalculatorTest" (JUnit, can_debug=true)
+     - "Calculator App" (Application, can_debug=true)
+     - "npm build" (npm, can_debug=false)
+
+2. Agent: list_breakpoints(projectPath="/Users/dev/calculator")
+   → Shows: [] (no breakpoints set)
+
+3. Agent: set_breakpoint(projectPath="/Users/dev/calculator", file_path="/src/Calculator.java", line=42)
    → Breakpoint set at Calculator.java:42
 
-2. Agent: start_debug_session(run_configuration="CalculatorTest")
+4. Agent: start_debug_session(projectPath="/Users/dev/calculator", configuration_name="CalculatorTest")
    → Debug session started, waiting for breakpoint
 
-3. [Breakpoint hit]
+5. [Breakpoint hit]
 
-4. Agent: get_variables(scope="all")
-   → Shows: items=[Item@1, Item@2], subtotal=0, tax=0
+6. Agent: get_debug_session_status(projectPath="/Users/dev/calculator")
+   → Returns rich context in ONE call:
+     - state: "paused"
+     - paused_reason: "breakpoint"
+     - current_location: { file: "Calculator.java", line: 42, method: "calculateTotal" }
+     - variables: [items=[Item@1, Item@2], subtotal=0, tax=0]
+     - watches: []
+     - source_context: (shows code around line 42)
+     - stack_summary: [calculateTotal <- runTest <- main]
 
-5. Agent: evaluate_expression(expression="items.stream().mapToDouble(Item::getPrice).sum()")
+7. Agent: evaluate(projectPath="/Users/dev/calculator", expression="items.stream().mapToDouble(Item::getPrice).sum()")
    → Result: 150.0
 
-6. Agent: step_over()
+8. Agent: step_over(projectPath="/Users/dev/calculator")
    → Now at line 43
 
-7. Agent: get_variables()
-   → Shows: subtotal=150.0, tax=0
+9. Agent: get_debug_session_status(projectPath="/Users/dev/calculator")
+   → Returns updated state:
+     - current_location: { line: 43 }
+     - variables: [subtotal=150.0, tax=0]
+     - source_context: (shows code around line 43)
 
-8. Agent: step_over()
-   → Now at line 44, tax calculation
+10. Agent: step_over(projectPath="/Users/dev/calculator")
+    → Now at line 44, tax calculation
 
-9. Agent: evaluate_expression(expression="subtotal * TAX_RATE")
-   → Result: 0.0 (TAX_RATE is 0!)
+11. Agent: evaluate(projectPath="/Users/dev/calculator", expression="subtotal * TAX_RATE")
+    → Result: 0.0 (TAX_RATE is 0!)
 
-10. Agent: "Found the bug! TAX_RATE constant is set to 0 instead of 0.08"
+12. Agent: "Found the bug! TAX_RATE constant is set to 0 instead of 0.08"
 ```
 
-This workflow demonstrates how an AI agent can systematically debug code using the MCP debugger tools.
+### Example 2: Multiple Projects Open
+
+```
+Agent: I want to set a breakpoint in the API server.
+
+1. Agent: set_breakpoint(file_path="/src/ApiController.java", line=100)
+   → Error: multiple_projects_open
+     "Multiple projects are open. Please specify 'projectPath' parameter."
+     open_projects: [
+       { name: "api-server", path: "/Users/dev/api-server" },
+       { name: "web-client", path: "/Users/dev/web-client" }
+     ]
+
+2. Agent: set_breakpoint(projectPath="/Users/dev/api-server", file_path="/src/ApiController.java", line=100)
+   → Breakpoint set at ApiController.java:100
+```
+
+### Example 3: Running Without Debugging
+
+```
+Agent: Run the build script to compile the project.
+
+1. Agent: list_run_configurations(projectPath="/Users/dev/myapp")
+   → Shows:
+     - "Build All" (Gradle, can_debug=false)
+     - "Run Tests" (JUnit, can_debug=true)
+
+2. Agent: run_configuration(projectPath="/Users/dev/myapp", configuration_name="Build All", wait_for_completion=true)
+   → status: "completed", exit_code: 0, message: "Build successful"
+```
+
+### Example 4: Using Watches for Repeated Evaluation
+
+```
+Agent: I want to monitor how the 'total' variable changes through multiple steps.
+
+1. Agent: add_watch(projectPath="/Users/dev/myapp", expression="order.getTotal()")
+   → Watch added: watch_uuid
+
+2. Agent: add_watch(projectPath="/Users/dev/myapp", expression="order.getItems().size()")
+   → Watch added: watch_uuid2
+
+3. Agent: step_over(projectPath="/Users/dev/myapp")
+   → Stepped to line 55
+
+4. Agent: get_debug_session_status(projectPath="/Users/dev/myapp")
+   → Returns state including watches:
+     - watches: [
+         { expression: "order.getTotal()", value: "100.50" },
+         { expression: "order.getItems().size()", value: "3" }
+       ]
+
+5. Agent: step_over(projectPath="/Users/dev/myapp")
+   → Stepped to line 56
+
+6. Agent: get_debug_session_status(projectPath="/Users/dev/myapp")
+   → Returns updated state:
+     - watches: [
+         { expression: "order.getTotal()", value: "125.75" },  // Changed!
+         { expression: "order.getItems().size()", value: "4" }  // Changed!
+       ]
+
+7. Agent: "The total increased from 100.50 to 125.75 after adding item #4"
+```
+
+These workflows demonstrate how an AI agent can efficiently debug code using fewer tool calls thanks to the rich `get_debug_session_status` response.
