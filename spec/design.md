@@ -251,6 +251,10 @@ src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
 │   ├── navigation/                        # Source navigation tools
 │   │   └── GetSourceContextTool.kt        # get_source_context
 │   │
+│   ├── util/                              # Tool utilities
+│   │   ├── VariablePresentationUtils.kt   # XValue presentation helpers
+│   │   └── StackFrameUtils.kt             # Stack frame extraction/collection
+│   │
 │   └── models/                            # Tool data models
 │       ├── SessionModels.kt               # Session-related models
 │       ├── BreakpointModels.kt            # Breakpoint-related models

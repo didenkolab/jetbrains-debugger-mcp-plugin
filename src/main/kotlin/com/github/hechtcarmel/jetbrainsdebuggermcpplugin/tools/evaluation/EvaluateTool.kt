@@ -4,26 +4,22 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallR
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.EvaluateResponse
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.EvaluationResult
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.StackFrameUtils
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.VariablePresentationUtils
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.frame.XValueNode
-import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
-import javax.swing.Icon
 import kotlin.coroutines.resume
 
 /**
@@ -77,16 +73,14 @@ class EvaluateTool : AbstractMcpTool() {
             return createErrorResult("Session must be paused to evaluate expressions")
         }
 
-        val currentFrame = session.currentStackFrame
-            ?: return createErrorResult("No current stack frame")
+        val frame = if (frameIndex == 0) {
+            session.currentStackFrame
+        } else {
+            StackFrameUtils.getFrameAtIndex(session, frameIndex)
+        } ?: return createErrorResult("No stack frame available at index $frameIndex")
 
-        // For now, we only support frame_index 0
-        if (frameIndex != 0) {
-            return createErrorResult("Currently only frame_index 0 is supported")
-        }
-
-        val evaluator = currentFrame.evaluator
-            ?: return createErrorResult("No evaluator available for current frame")
+        val evaluator = frame.evaluator
+            ?: return createErrorResult("No evaluator available for frame at index $frameIndex")
 
         val result = evaluateExpression(evaluator, expression)
             ?: return createErrorResult("Evaluation timed out or failed")
@@ -110,9 +104,13 @@ class EvaluateTool : AbstractMcpTool() {
                     xExpression,
                     object : XDebuggerEvaluator.XEvaluationCallback {
                         override fun evaluated(result: XValue) {
-                            // Get the presentation of the result
-                            getValuePresentation(result, expression) { evalResult ->
-                                continuation.resume(evalResult)
+                            VariablePresentationUtils.computeFullPresentation(result) { presentation ->
+                                continuation.resume(EvaluationResult(
+                                    expression = expression,
+                                    value = presentation.value,
+                                    type = presentation.type,
+                                    hasChildren = presentation.hasChildren
+                                ))
                             }
                         }
 
@@ -130,65 +128,5 @@ class EvaluateTool : AbstractMcpTool() {
                 )
             }
         }
-    }
-
-    private fun getValuePresentation(
-        value: XValue,
-        expression: String,
-        callback: (EvaluationResult) -> Unit
-    ) {
-        value.computePresentation(object : XValueNode {
-            override fun setPresentation(
-                icon: Icon?,
-                type: String?,
-                valueText: String,
-                hasChildren: Boolean
-            ) {
-                callback(EvaluationResult(
-                    expression = expression,
-                    value = valueText,
-                    type = type ?: "unknown",
-                    hasChildren = hasChildren
-                ))
-            }
-
-            override fun setPresentation(
-                icon: Icon?,
-                presentation: XValuePresentation,
-                hasChildren: Boolean
-            ) {
-                val valueText = buildString {
-                    presentation.renderValue(object : XValuePresentation.XValueTextRenderer {
-                        override fun renderValue(value: String) { append(value) }
-                        override fun renderStringValue(value: String) { append("\"$value\"") }
-                        override fun renderNumericValue(value: String) { append(value) }
-                        override fun renderKeywordValue(value: String) { append(value) }
-                        override fun renderValue(
-                            value: String,
-                            key: com.intellij.openapi.editor.colors.TextAttributesKey
-                        ) { append(value) }
-                        override fun renderStringValue(
-                            value: String,
-                            additionalSpecialCharsToHighlight: String?,
-                            maxLength: Int
-                        ) { append("\"$value\"") }
-                        override fun renderComment(comment: String) { append(" // $comment") }
-                        override fun renderSpecialSymbol(symbol: String) { append(symbol) }
-                        override fun renderError(error: String) { append("ERROR: $error") }
-                    })
-                }
-
-                callback(EvaluationResult(
-                    expression = expression,
-                    value = valueText,
-                    type = presentation.type ?: "unknown",
-                    hasChildren = hasChildren
-                ))
-            }
-
-            override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {}
-
-            override fun isObsolete(): Boolean = false
-        }, com.intellij.xdebugger.frame.XValuePlace.TREE)
     }
 }

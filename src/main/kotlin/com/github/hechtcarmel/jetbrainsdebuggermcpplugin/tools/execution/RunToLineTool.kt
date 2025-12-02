@@ -80,7 +80,8 @@ class RunToLineTool : AbstractMcpTool() {
             createJsonResult(ExecutionControlResult(
                 sessionId = getSessionId(session),
                 action = "run_to_line",
-                status = "executed",
+                status = "success",
+                newState = "running",
                 message = "Running to $filePath:$line"
             ))
         } catch (e: Exception) {

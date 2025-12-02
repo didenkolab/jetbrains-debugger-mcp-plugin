@@ -54,7 +54,8 @@ class StepOutTool : AbstractMcpTool() {
         return createJsonResult(ExecutionControlResult(
             sessionId = getSessionId(session),
             action = "step_out",
-            status = "executed",
+            status = "success",
+            newState = "running",
             message = "Stepping out of current method"
         ))
     }

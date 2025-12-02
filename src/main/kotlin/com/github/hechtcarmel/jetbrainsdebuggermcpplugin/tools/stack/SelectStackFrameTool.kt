@@ -4,11 +4,9 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallR
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SelectFrameResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.StackFrameInfo
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.StackFrameUtils
 import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -17,7 +15,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
-import kotlin.coroutines.resume
 
 class SelectStackFrameTool : AbstractMcpTool() {
 
@@ -68,7 +65,7 @@ class SelectStackFrameTool : AbstractMcpTool() {
         val executionStack = suspendContext.activeExecutionStack
             ?: return createErrorResult("No execution stack available")
 
-        val frames = getStackFrames(executionStack, frameIndex + 1)
+        val frames = StackFrameUtils.collectStackFrames(executionStack, frameIndex + 1)
         if (frameIndex >= frames.size) {
             return createErrorResult("Frame index $frameIndex out of bounds (max: ${frames.size - 1})")
         }
@@ -76,17 +73,7 @@ class SelectStackFrameTool : AbstractMcpTool() {
         val targetFrame = frames[frameIndex]
         session.setCurrentStackFrame(executionStack, targetFrame)
 
-        val position = targetFrame.sourcePosition
-        val frameInfo = StackFrameInfo(
-            index = frameIndex,
-            file = position?.file?.path,
-            line = position?.let { it.line + 1 },
-            className = extractClassName(targetFrame),
-            methodName = extractMethodName(targetFrame),
-            isCurrent = true,
-            isLibrary = position?.file?.path?.contains(".jar!") == true,
-            presentation = targetFrame.toString().take(100)
-        )
+        val frameInfo = createFrameInfo(targetFrame, frameIndex)
 
         return createJsonResult(SelectFrameResult(
             sessionId = getSessionId(session),
@@ -96,38 +83,19 @@ class SelectStackFrameTool : AbstractMcpTool() {
         ))
     }
 
-    private suspend fun getStackFrames(executionStack: XExecutionStack, limit: Int): List<XStackFrame> {
-        return withTimeoutOrNull(5000L) {
-            suspendCancellableCoroutine { continuation ->
-                val frames = mutableListOf<XStackFrame>()
+    private fun createFrameInfo(frame: XStackFrame, index: Int): StackFrameInfo {
+        val position = frame.sourcePosition
+        val path = position?.file?.path
 
-                executionStack.topFrame?.let { frames.add(it) }
-
-                executionStack.computeStackFrames(1, object : XExecutionStack.XStackFrameContainer {
-                    override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, last: Boolean) {
-                        frames.addAll(stackFrames)
-                        if (last || frames.size >= limit) {
-                            continuation.resume(frames.take(limit))
-                        }
-                    }
-
-                    override fun errorOccurred(errorMessage: String) {
-                        continuation.resume(frames)
-                    }
-                })
-            }
-        } ?: emptyList()
-    }
-
-    private fun extractClassName(frame: XStackFrame): String? {
-        val presentation = frame.toString()
-        val match = Regex("""([a-zA-Z_][\w.]*)\.[a-zA-Z_]\w*\(""").find(presentation)
-        return match?.groupValues?.get(1)
-    }
-
-    private fun extractMethodName(frame: XStackFrame): String? {
-        val presentation = frame.toString()
-        val match = Regex("""\.([a-zA-Z_]\w*)\(""").find(presentation)
-        return match?.groupValues?.get(1)
+        return StackFrameInfo(
+            index = index,
+            file = path,
+            line = position?.let { it.line + 1 },
+            className = StackFrameUtils.extractClassName(frame),
+            methodName = StackFrameUtils.extractMethodName(frame),
+            isCurrent = true,
+            isLibrary = StackFrameUtils.isLibraryPath(path),
+            presentation = frame.toString().take(100)
+        )
     }
 }

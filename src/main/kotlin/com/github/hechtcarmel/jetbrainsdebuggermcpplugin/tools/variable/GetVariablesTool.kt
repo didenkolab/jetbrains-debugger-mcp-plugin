@@ -4,18 +4,14 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallR
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.VariableInfo
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.VariablesResult
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.StackFrameUtils
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.VariablePresentationUtils
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-import com.intellij.xdebugger.frame.XExecutionStack
-import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.frame.XValueNode
-import com.intellij.xdebugger.frame.XValuePlace
-import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
@@ -71,11 +67,10 @@ class GetVariablesTool : AbstractMcpTool() {
             return createErrorResult("Session must be paused to get variables")
         }
 
-        // Get the frame at the requested index
         val frame = if (frameIndex == 0) {
             session.currentStackFrame
         } else {
-            getFrameAtIndex(session, frameIndex)
+            StackFrameUtils.getFrameAtIndex(session, frameIndex)
         } ?: return createErrorResult("No stack frame available at index $frameIndex")
 
         val variables = getVariablesFromFrame(frame)
@@ -85,39 +80,6 @@ class GetVariablesTool : AbstractMcpTool() {
             frameIndex = frameIndex,
             variables = variables
         ))
-    }
-
-    private suspend fun getFrameAtIndex(session: com.intellij.xdebugger.XDebugSession, frameIndex: Int): XStackFrame? {
-        val suspendContext = session.suspendContext ?: return null
-        val executionStack = suspendContext.activeExecutionStack ?: return null
-
-        if (frameIndex == 0) {
-            return executionStack.topFrame
-        }
-
-        // Get frames from the execution stack
-        return withTimeoutOrNull(3000L) {
-            suspendCancellableCoroutine { continuation ->
-                val frames = mutableListOf<XStackFrame>()
-
-                // Add top frame first
-                executionStack.topFrame?.let { frames.add(it) }
-
-                executionStack.computeStackFrames(1, object : XExecutionStack.XStackFrameContainer {
-                    override fun addStackFrames(stackFrames: MutableList<out XStackFrame>, last: Boolean) {
-                        frames.addAll(stackFrames)
-                        if (last || frames.size > frameIndex) {
-                            val result = frames.getOrNull(frameIndex)
-                            continuation.resume(result)
-                        }
-                    }
-
-                    override fun errorOccurred(errorMessage: String) {
-                        continuation.resume(frames.getOrNull(frameIndex))
-                    }
-                })
-            }
-        }
     }
 
     private suspend fun getVariablesFromFrame(frame: XStackFrame): List<VariableInfo> {
@@ -135,7 +97,7 @@ class GetVariablesTool : AbstractMcpTool() {
                             val name = children.getName(i)
                             val value = children.getValue(i)
 
-                            computeValuePresentation(name, value) { varInfo ->
+                            VariablePresentationUtils.computeValuePresentation(name, value) { varInfo ->
                                 synchronized(variables) {
                                     variables.add(varInfo)
                                     pendingPresentations--
@@ -189,65 +151,5 @@ class GetVariablesTool : AbstractMcpTool() {
                 })
             }
         } ?: emptyList()
-    }
-
-    private fun computeValuePresentation(
-        name: String,
-        value: XValue,
-        callback: (VariableInfo) -> Unit
-    ) {
-        value.computePresentation(object : XValueNode {
-            override fun setPresentation(
-                icon: Icon?,
-                type: String?,
-                valueText: String,
-                hasChildren: Boolean
-            ) {
-                callback(VariableInfo(
-                    name = name,
-                    value = valueText,
-                    type = type ?: "unknown",
-                    hasChildren = hasChildren
-                ))
-            }
-
-            override fun setPresentation(
-                icon: Icon?,
-                presentation: XValuePresentation,
-                hasChildren: Boolean
-            ) {
-                val valueText = buildString {
-                    presentation.renderValue(object : XValuePresentation.XValueTextRenderer {
-                        override fun renderValue(v: String) { append(v) }
-                        override fun renderStringValue(v: String) { append("\"$v\"") }
-                        override fun renderNumericValue(v: String) { append(v) }
-                        override fun renderKeywordValue(v: String) { append(v) }
-                        override fun renderValue(
-                            v: String,
-                            key: com.intellij.openapi.editor.colors.TextAttributesKey
-                        ) { append(v) }
-                        override fun renderStringValue(
-                            v: String,
-                            additionalSpecialCharsToHighlight: String?,
-                            maxLength: Int
-                        ) { append("\"$v\"") }
-                        override fun renderComment(comment: String) { append(" // $comment") }
-                        override fun renderSpecialSymbol(symbol: String) { append(symbol) }
-                        override fun renderError(error: String) { append("ERROR: $error") }
-                    })
-                }
-
-                callback(VariableInfo(
-                    name = name,
-                    value = valueText,
-                    type = presentation.type ?: "unknown",
-                    hasChildren = hasChildren
-                ))
-            }
-
-            override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {}
-
-            override fun isObsolete(): Boolean = false
-        }, XValuePlace.TREE)
     }
 }

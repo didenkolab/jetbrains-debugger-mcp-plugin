@@ -3,24 +3,20 @@ package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SetVariableResult
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.VariablePresentationUtils
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-import com.intellij.xdebugger.frame.XFullValueEvaluator
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.frame.XValueNode
-import com.intellij.xdebugger.frame.XValuePlace
-import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -81,15 +77,12 @@ class SetVariableTool : AbstractMcpTool() {
         val currentFrame = session.currentStackFrame
             ?: return createErrorResult("No current stack frame")
 
-        // First, get the current value and type of the variable
         val (_, oldValue, type) = findVariableByName(currentFrame, variableName)
             ?: return createErrorResult("Variable not found: $variableName")
 
-        // Get the evaluator to execute the assignment
         val evaluator = currentFrame.evaluator
             ?: return createErrorResult("No evaluator available - cannot modify variable")
 
-        // Use assignment expression to set the variable value
         val assignmentExpression = "$variableName = $newValue"
         val setResult = evaluateAssignment(evaluator, assignmentExpression)
 
@@ -134,7 +127,7 @@ class SetVariableTool : AbstractMcpTool() {
                             if (name == targetName) {
                                 foundVariable = children.getValue(i)
                                 pendingPresentations++
-                                computePresentation(foundVariable!!) { displayValue, type ->
+                                VariablePresentationUtils.computeSimplePresentation(foundVariable!!) { displayValue, type ->
                                     synchronized(this@SetVariableTool) {
                                         result = VariableData(foundVariable!!, displayValue, type)
                                         pendingPresentations--
@@ -176,50 +169,6 @@ class SetVariableTool : AbstractMcpTool() {
         }
     }
 
-    private fun computePresentation(value: XValue, callback: (String, String) -> Unit) {
-        value.computePresentation(object : XValueNode {
-            override fun setPresentation(
-                icon: Icon?,
-                type: String?,
-                valueText: String,
-                hasChildren: Boolean
-            ) {
-                callback(valueText, type ?: "unknown")
-            }
-
-            override fun setPresentation(
-                icon: Icon?,
-                presentation: XValuePresentation,
-                hasChildren: Boolean
-            ) {
-                val valueText = buildString {
-                    presentation.renderValue(object : XValuePresentation.XValueTextRenderer {
-                        override fun renderValue(v: String) { append(v) }
-                        override fun renderStringValue(v: String) { append("\"$v\"") }
-                        override fun renderNumericValue(v: String) { append(v) }
-                        override fun renderKeywordValue(v: String) { append(v) }
-                        override fun renderValue(
-                            v: String,
-                            key: com.intellij.openapi.editor.colors.TextAttributesKey
-                        ) { append(v) }
-                        override fun renderStringValue(
-                            v: String,
-                            additionalSpecialCharsToHighlight: String?,
-                            maxLength: Int
-                        ) { append("\"$v\"") }
-                        override fun renderComment(comment: String) { append(" // $comment") }
-                        override fun renderSpecialSymbol(symbol: String) { append(symbol) }
-                        override fun renderError(error: String) { append("ERROR: $error") }
-                    })
-                }
-                callback(valueText, presentation.type ?: "unknown")
-            }
-
-            override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {}
-            override fun isObsolete(): Boolean = false
-        }, XValuePlace.TREE)
-    }
-
     private suspend fun evaluateAssignment(
         evaluator: XDebuggerEvaluator,
         assignmentExpression: String
@@ -232,41 +181,9 @@ class SetVariableTool : AbstractMcpTool() {
                     xExpression,
                     object : XDebuggerEvaluator.XEvaluationCallback {
                         override fun evaluated(result: XValue) {
-                            // Get the result value from the assignment
-                            result.computePresentation(object : XValueNode {
-                                override fun setPresentation(
-                                    icon: Icon?,
-                                    type: String?,
-                                    valueText: String,
-                                    hasChildren: Boolean
-                                ) {
-                                    continuation.resume(SetResult(success = true, resultValue = valueText))
-                                }
-
-                                override fun setPresentation(
-                                    icon: Icon?,
-                                    presentation: XValuePresentation,
-                                    hasChildren: Boolean
-                                ) {
-                                    val valueText = buildString {
-                                        presentation.renderValue(object : XValuePresentation.XValueTextRenderer {
-                                            override fun renderValue(v: String) { append(v) }
-                                            override fun renderStringValue(v: String) { append("\"$v\"") }
-                                            override fun renderNumericValue(v: String) { append(v) }
-                                            override fun renderKeywordValue(v: String) { append(v) }
-                                            override fun renderValue(v: String, key: com.intellij.openapi.editor.colors.TextAttributesKey) { append(v) }
-                                            override fun renderStringValue(v: String, additionalSpecialCharsToHighlight: String?, maxLength: Int) { append("\"$v\"") }
-                                            override fun renderComment(comment: String) {}
-                                            override fun renderSpecialSymbol(symbol: String) { append(symbol) }
-                                            override fun renderError(error: String) { append("ERROR: $error") }
-                                        })
-                                    }
-                                    continuation.resume(SetResult(success = true, resultValue = valueText))
-                                }
-
-                                override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {}
-                                override fun isObsolete(): Boolean = false
-                            }, XValuePlace.TREE)
+                            VariablePresentationUtils.computeSimplePresentation(result) { valueText, _ ->
+                                continuation.resume(SetResult(success = true, resultValue = valueText))
+                            }
                         }
 
                         override fun errorOccurred(errorMessage: String) {
