@@ -3,6 +3,7 @@ package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.McpConstants
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ContentBlock
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.JsonRpcErrorCodes
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolDefinition
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.McpTool
@@ -256,6 +257,7 @@ class JsonRpcHandlerTest : BasePlatformTestCase() {
                 put("type", "object")
                 putJsonObject("properties") {}
             }
+            override val annotations = ToolAnnotations.readOnly(name)
 
             override suspend fun execute(project: Project, arguments: JsonObject): ToolCallResult {
                 return ToolCallResult(

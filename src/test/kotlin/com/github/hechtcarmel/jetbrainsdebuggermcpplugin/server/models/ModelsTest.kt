@@ -188,4 +188,192 @@ class ModelsTest {
         assertTrue(encoded.contains("\"type\":\"text\""))
         assertTrue(encoded.contains("\"text\":\"Sample text\""))
     }
+
+    // Helper Function Tests
+
+    @Test
+    fun `textContent creates Text ContentBlock`() {
+        val content = textContent("Test message")
+
+        assertTrue(content is ContentBlock.Text)
+        assertEquals("Test message", (content as ContentBlock.Text).text)
+    }
+
+    @Test
+    fun `successResult creates non-error ToolCallResult`() {
+        val result = successResult("Operation successful")
+
+        assertFalse(result.isError)
+        assertEquals(1, result.content.size)
+        assertEquals("Operation successful", (result.content[0] as ContentBlock.Text).text)
+    }
+
+    @Test
+    fun `errorResult creates error ToolCallResult`() {
+        val result = errorResult("Something went wrong")
+
+        assertTrue(result.isError)
+        assertEquals(1, result.content.size)
+        assertEquals("Something went wrong", (result.content[0] as ContentBlock.Text).text)
+    }
+
+    @Test
+    fun `successResult with empty string`() {
+        val result = successResult("")
+
+        assertFalse(result.isError)
+        assertEquals("", (result.content[0] as ContentBlock.Text).text)
+    }
+
+    @Test
+    fun `errorResult with empty string`() {
+        val result = errorResult("")
+
+        assertTrue(result.isError)
+        assertEquals("", (result.content[0] as ContentBlock.Text).text)
+    }
+
+    // ToolDefinition with Annotations Tests
+
+    @Test
+    fun `ToolDefinition without annotations serializes correctly`() {
+        val definition = ToolDefinition(
+            name = "simple_tool",
+            description = "A simple tool",
+            inputSchema = buildJsonObject { put("type", "object") },
+            annotations = null
+        )
+
+        val encoded = json.encodeToString(definition)
+
+        assertTrue(encoded.contains("\"name\":\"simple_tool\""))
+        assertTrue(encoded.contains("\"description\":\"A simple tool\""))
+        assertTrue(encoded.contains("\"inputSchema\""))
+    }
+
+    @Test
+    fun `ToolDefinition with annotations serializes correctly`() {
+        val definition = ToolDefinition(
+            name = "annotated_tool",
+            description = "A tool with annotations",
+            inputSchema = buildJsonObject { put("type", "object") },
+            annotations = ToolAnnotations.readOnly("Annotated Tool")
+        )
+
+        val encoded = json.encodeToString(definition)
+
+        assertTrue(encoded.contains("\"annotations\""))
+        assertTrue(encoded.contains("\"title\":\"Annotated Tool\""))
+    }
+
+    // Additional Edge Cases
+
+    @Test
+    fun `JsonRpcRequest with null id`() {
+        val request = JsonRpcRequest(
+            id = null,
+            method = "notification",
+            params = null
+        )
+
+        val encoded = json.encodeToString(request)
+
+        assertTrue(encoded.contains("\"method\":\"notification\""))
+    }
+
+    @Test
+    fun `JsonRpcRequest with string id`() {
+        val request = JsonRpcRequest(
+            id = JsonPrimitive("abc-123"),
+            method = "test",
+            params = null
+        )
+
+        val encoded = json.encodeToString(request)
+
+        assertTrue(encoded.contains("\"id\":\"abc-123\""))
+    }
+
+    @Test
+    fun `JsonRpcError with data field`() {
+        val error = JsonRpcError(
+            code = JsonRpcErrorCodes.INVALID_PARAMS,
+            message = "Missing required field",
+            data = buildJsonObject { put("field", "name") }
+        )
+
+        val encoded = json.encodeToString(error)
+
+        assertTrue(encoded.contains("\"data\""))
+        assertTrue(encoded.contains("\"field\":\"name\""))
+    }
+
+    @Test
+    fun `ServerCapabilities with default values`() {
+        val capabilities = ServerCapabilities()
+
+        assertNotNull(capabilities.tools)
+        assertEquals(false, capabilities.tools?.listChanged)
+    }
+
+    @Test
+    fun `ToolCapability default listChanged is false`() {
+        val capability = ToolCapability()
+
+        assertEquals(false, capability.listChanged)
+    }
+
+    @Test
+    fun `ServerInfo with null description`() {
+        val serverInfo = ServerInfo(
+            name = "server",
+            version = "1.0.0",
+            description = null
+        )
+
+        val encoded = json.encodeToString(serverInfo)
+
+        assertTrue(encoded.contains("\"name\":\"server\""))
+        assertTrue(encoded.contains("\"version\":\"1.0.0\""))
+    }
+
+    @Test
+    fun `ToolCallParams with null arguments`() {
+        val params = ToolCallParams(
+            name = "tool_name",
+            arguments = null
+        )
+
+        val encoded = json.encodeToString(params)
+
+        assertTrue(encoded.contains("\"name\":\"tool_name\""))
+    }
+
+    @Test
+    fun `ToolCallResult with multiple content blocks`() {
+        val result = ToolCallResult(
+            content = listOf(
+                ContentBlock.Text(text = "First line"),
+                ContentBlock.Text(text = "Second line")
+            ),
+            isError = false
+        )
+
+        val encoded = json.encodeToString(result)
+
+        assertTrue(encoded.contains("First line"))
+        assertTrue(encoded.contains("Second line"))
+    }
+
+    @Test
+    fun `ToolCallResult with empty content list`() {
+        val result = ToolCallResult(
+            content = emptyList(),
+            isError = false
+        )
+
+        val encoded = json.encodeToString(result)
+
+        assertTrue(encoded.contains("\"content\":[]"))
+    }
 }

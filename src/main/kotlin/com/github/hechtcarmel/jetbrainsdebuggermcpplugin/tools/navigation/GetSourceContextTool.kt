@@ -96,29 +96,33 @@ class GetSourceContextTool : AbstractMcpTool() {
         val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath)
             ?: return createErrorResult("File not found: $filePath")
 
-        val document = FileDocumentManager.getInstance().getDocument(virtualFile)
-            ?: return createErrorResult("Cannot read file: $filePath")
+        val (startLine, endLine, lines) = readAction {
+            val document = FileDocumentManager.getInstance().getDocument(virtualFile)
+                ?: return@readAction null
 
-        val startLine = maxOf(1, centerLine - linesBefore)
-        val endLine = minOf(document.lineCount, centerLine + linesAfter)
+            val start = maxOf(1, centerLine - linesBefore)
+            val end = minOf(document.lineCount, centerLine + linesAfter)
 
-        val lines = (startLine..endLine).mapNotNull { lineNum ->
-            try {
-                val lineIndex = lineNum - 1
-                if (lineIndex >= 0 && lineIndex < document.lineCount) {
-                    val lineStart = document.getLineStartOffset(lineIndex)
-                    val lineEnd = document.getLineEndOffset(lineIndex)
-                    val content = document.getText(TextRange(lineStart, lineEnd))
-                    SourceLine(
-                        number = lineNum,
-                        content = content,
-                        isCurrent = lineNum == centerLine
-                    )
-                } else null
-            } catch (e: Exception) {
-                null
+            val sourceLines = (start..end).mapNotNull { lineNum ->
+                try {
+                    val lineIndex = lineNum - 1
+                    if (lineIndex >= 0 && lineIndex < document.lineCount) {
+                        val lineStart = document.getLineStartOffset(lineIndex)
+                        val lineEnd = document.getLineEndOffset(lineIndex)
+                        val content = document.getText(TextRange(lineStart, lineEnd))
+                        SourceLine(
+                            number = lineNum,
+                            content = content,
+                            isCurrent = lineNum == centerLine
+                        )
+                    } else null
+                } catch (e: Exception) {
+                    null
+                }
             }
-        }
+
+            Triple(start, end, sourceLines)
+        } ?: return createErrorResult("Cannot read file: $filePath")
 
         val breakpointManager = getDebuggerManager(project).breakpointManager
         val breakpointsInView = breakpointManager.allBreakpoints
