@@ -3,6 +3,7 @@ package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.execution
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ExecutionControlResult
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonArray
@@ -49,7 +50,10 @@ class StepOverTool : AbstractMcpTool() {
         }
 
         return try {
-            session.stepOver(false)
+            // stepOver must be called from EDT
+            ApplicationManager.getApplication().invokeAndWait {
+                session.stepOver(false)
+            }
             createJsonResult(ExecutionControlResult(
                 sessionId = getSessionId(session),
                 action = "step_over",

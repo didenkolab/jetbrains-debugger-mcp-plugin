@@ -114,22 +114,30 @@ class SetBreakpointTool : AbstractMcpTool() {
         }
 
         return try {
-            // Use XDebuggerUtil.toggleLineBreakpoint which properly handles type resolution
-            // and integrates with the debugger infrastructure
-            withContext(Dispatchers.Main) {
-                ApplicationManager.getApplication().invokeAndWait {
-                    // toggleLineBreakpoint is the same method called when clicking in the gutter
-                    // It properly resolves the breakpoint type using getBreakpointTypeByPosition()
-                    XDebuggerUtil.getInstance().toggleLineBreakpoint(
-                        project,
-                        virtualFile,
-                        lineIndex,
-                        temporary
-                    )
+            // First check if a breakpoint already exists at this location
+            var existingBreakpoint = findBreakpointAtLine(breakpointManager, virtualFile, lineIndex)
+
+            if (existingBreakpoint == null) {
+                // Use XDebuggerUtil.toggleLineBreakpoint which properly handles type resolution
+                // and integrates with the debugger infrastructure
+                withContext(Dispatchers.Main) {
+                    ApplicationManager.getApplication().invokeAndWait {
+                        // toggleLineBreakpoint is the same method called when clicking in the gutter
+                        // It properly resolves the breakpoint type using getBreakpointTypeByPosition()
+                        XDebuggerUtil.getInstance().toggleLineBreakpoint(
+                            project,
+                            virtualFile,
+                            lineIndex,
+                            temporary
+                        )
+                    }
                 }
+
+                // Small delay to allow async breakpoint creation to complete
+                kotlinx.coroutines.delay(100)
             }
 
-            // Find the breakpoint that was just created
+            // Find the breakpoint (either existing or just created)
             val breakpoint = findBreakpointAtLine(breakpointManager, virtualFile, lineIndex)
 
             if (breakpoint == null) {
