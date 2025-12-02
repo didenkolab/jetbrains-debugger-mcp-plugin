@@ -4,7 +4,6 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolDefin
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint.ListBreakpointsTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint.RemoveBreakpointTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint.SetBreakpointTool
-import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint.SetExceptionBreakpointTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.evaluation.EvaluateTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.execution.PauseTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.execution.ResumeTool
@@ -67,9 +66,6 @@ class ToolRegistry {
         register(ListBreakpointsTool())
         register(SetBreakpointTool())
         register(RemoveBreakpointTool())
-
-        // Breakpoint Tools (P2)
-        register(SetExceptionBreakpointTool())
 
         // Execution Control Tools (P0)
         register(ResumeTool())

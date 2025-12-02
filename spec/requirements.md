@@ -520,23 +520,6 @@ All tools accept an optional `projectPath` parameter to specify which project to
 - Returns success even if breakpoint doesn't exist (idempotent)
 - Supports removing all breakpoints in a file when only `file_path` provided
 
-#### FR-2.3.4: Set Exception Breakpoint
-**Description:** Set a breakpoint that triggers on exceptions.
-
-**Input:**
-```json
-{
-  "name": "set_exception_breakpoint",
-  "arguments": {
-    "projectPath": "/path/to/project",
-    "exception_class": "java.lang.NullPointerException",
-    "caught": true,
-    "uncaught": true,
-    "condition": null
-  }
-}
-```
-
 ---
 
 ### 2.4 Execution Control
@@ -1339,7 +1322,6 @@ Tools will be registered using the JetBrains MCP Server extension point:
 - Expression evaluation
 - Conditional breakpoints
 - Variable modification
-- Exception breakpoints
 
 **Success Criteria:**
 - AI agent can evaluate expressions and modify state
@@ -1462,7 +1444,6 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | `list_breakpoints` | Breakpoints | P0 |
 | `set_breakpoint` | Breakpoints | P0 |
 | `remove_breakpoint` | Breakpoints | P0 |
-| `set_exception_breakpoint` | Breakpoints | P2 |
 | `resume` | Execution | P0 |
 | `pause` | Execution | P0 |
 | `step_over` | Execution | P0 |
@@ -1478,12 +1459,12 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | `evaluate` | Evaluation | P0 |
 | `get_source_context` | Navigation | P1 |
 
-**Total Tools: 24**
+**Total Tools: 23**
 
 **Priority Legend:**
 - P0: Must have for MVP (16 tools)
 - P1: Important for usability (6 tools)
-- P2: Nice to have (2 tools)
+- P2: Nice to have (1 tool)
 
 **Consolidation Notes:**
 - `toggle_breakpoint` removed (use `set_breakpoint` / `remove_breakpoint`)

@@ -21,7 +21,6 @@ A JetBrains IDE plugin that exposes an **MCP (Model Context Protocol) server**, 
 **Breakpoint Management**
 - **Line Breakpoints** - Set breakpoints at any valid location
 - **Conditional Breakpoints** - Add conditions that must be true to pause
-- **Exception Breakpoints** - Break on caught or uncaught exceptions
 - **Tracepoints** - Log messages without pausing execution
 
 **Execution Control**
@@ -50,7 +49,7 @@ Unlike manual debugging, this plugin enables:
 - **Rich Context in Single Calls** - Get variables, stack, and source in one request
 - **Programmatic Breakpoint Control** - Set conditional breakpoints with complex expressions
 - **Cross-IDE Compatibility** - Works with any JetBrains IDE that supports XDebugger
-- **24 Comprehensive Tools** - Full debugging capability through MCP
+- **23 Comprehensive Tools** - Full debugging capability through MCP
 
 Perfect for AI-assisted development workflows where you want your assistant to investigate bugs, validate fixes, or explore code behavior autonomously.
 <!-- Plugin description end -->
@@ -109,7 +108,7 @@ Just tell your AI assistant:
 
 Or for more complex debugging:
 
-> "There's a null pointer exception in UserService. Set an exception breakpoint for NullPointerException, run the app, and when it breaks, show me the stack trace and all local variables."
+> "There's a bug in UserService. Set a breakpoint at line 42, run the tests in debug mode, and when it breaks, show me the stack trace and all local variables."
 
 ## Client Configuration
 
@@ -186,7 +185,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Available Tools
 
-The plugin provides **24 MCP tools** organized by category:
+The plugin provides **23 MCP tools** organized by category:
 
 ### Run Configuration Tools
 
@@ -211,7 +210,6 @@ The plugin provides **24 MCP tools** organized by category:
 | `list_breakpoints` | List all breakpoints with optional filtering |
 | `set_breakpoint` | Set a line breakpoint with condition, log message, suspend policy |
 | `remove_breakpoint` | Remove a breakpoint by ID or location |
-| `set_exception_breakpoint` | Set an exception breakpoint for caught/uncaught exceptions |
 
 ### Execution Control Tools
 

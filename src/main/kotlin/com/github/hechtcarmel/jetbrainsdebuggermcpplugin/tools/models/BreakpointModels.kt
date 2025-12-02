@@ -27,7 +27,7 @@ data class BreakpointInfo(
 /**
  * Result of setting a breakpoint.
  *
- * Returned by set_breakpoint and set_exception_breakpoint tools.
+ * Returned by set_breakpoint tool.
  */
 @Serializable
 data class SetBreakpointResult(

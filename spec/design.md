@@ -224,8 +224,7 @@ src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
 │   ├── breakpoint/                        # Breakpoint tools
 │   │   ├── ListBreakpointsTool.kt         # list_breakpoints
 │   │   ├── SetBreakpointTool.kt           # set_breakpoint
-│   │   ├── RemoveBreakpointTool.kt        # remove_breakpoint
-│   │   └── SetExceptionBreakpointTool.kt  # set_exception_breakpoint
+│   │   └── RemoveBreakpointTool.kt        # remove_breakpoint
 │   │
 │   ├── execution/                         # Execution control tools
 │   │   ├── ResumeTool.kt                  # resume
@@ -587,7 +586,6 @@ class ToolRegistry {
         register(ListBreakpointsTool())
         register(SetBreakpointTool())
         register(RemoveBreakpointTool())
-        register(SetExceptionBreakpointTool())
 
         // Execution Control Tools
         register(ResumeTool())
@@ -866,7 +864,7 @@ data class BreakpointInfo(
     val suspendPolicy: String?,
     val hitCount: Int,
     val temporary: Boolean,
-    // For exception breakpoints
+    // Reserved for future breakpoint types
     val exceptionClass: String?,
     val caught: Boolean?,
     val uncaught: Boolean?
@@ -2080,7 +2078,6 @@ class SetBreakpointToolTest : BasePlatformTestCase() {
 | `list_breakpoints` | Breakpoints | P0 |
 | `set_breakpoint` | Breakpoints | P0 |
 | `remove_breakpoint` | Breakpoints | P0 |
-| `set_exception_breakpoint` | Breakpoints | P2 |
 | `resume` | Execution | P0 |
 | `pause` | Execution | P0 |
 | `step_over` | Execution | P0 |
@@ -2096,7 +2093,7 @@ class SetBreakpointToolTest : BasePlatformTestCase() {
 | `evaluate` | Evaluation | P0 |
 | `get_source_context` | Navigation | P1 |
 
-**Total Tools: 24**
+**Total Tools: 23**
 
 ---
 

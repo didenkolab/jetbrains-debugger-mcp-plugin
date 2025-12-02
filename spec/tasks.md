@@ -626,11 +626,11 @@
 
 ### Tasks
 
-- [x] **8.1** Create `tools/breakpoint/SetExceptionBreakpointTool.kt`
-  - [x] Define name, description, inputSchema (exception_class, caught?, uncaught?, enabled?)
-  - [x] Find JavaExceptionBreakpointType
-  - [x] Create exception breakpoint
-  - [x] Return breakpoint info
+- [x] ~~**8.1** Create `tools/breakpoint/SetExceptionBreakpointTool.kt`~~ (REMOVED - reflection-based approach unreliable)
+  - [x] ~~Define name, description, inputSchema (exception_class, caught?, uncaught?, enabled?)~~
+  - [x] ~~Find JavaExceptionBreakpointType~~
+  - [x] ~~Create exception breakpoint~~
+  - [x] ~~Return breakpoint info~~
 
 - [x] **8.2** Create `tools/variable/SetVariableTool.kt`
   - [x] Define name, description, inputSchema (variable_name, new_value, session_id?, frame_index?)
@@ -646,7 +646,7 @@
   - [x] All tools registered
 
 - [x] **8.5** Update tool count in documentation
-  - [x] Verified all 24 tools are registered
+  - [x] Verified all 23 tools are registered (exception breakpoint tool removed)
 
 - [x] **8.8** Full integration test
   - [x] Build passes
@@ -802,7 +802,7 @@
   - [x] No remaining TODOs in codebase
 
 - [x] **10.4.2** Code cleanup
-  - [x] Fixed type inference in SetExceptionBreakpointTool
+  - [x] Removed SetExceptionBreakpointTool (reflection-based API was unreliable)
   - [x] Consistent formatting throughout
 
 - [x] **10.4.3** Final testing

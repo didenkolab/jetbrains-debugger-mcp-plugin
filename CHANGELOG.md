@@ -22,11 +22,10 @@
 - `stop_debug_session` - Stop a debug session
 - `get_debug_session_status` - Get comprehensive session status with variables, stack trace, and source context
 
-#### Breakpoint Tools (4 tools)
+#### Breakpoint Tools (3 tools)
 - `list_breakpoints` - List all breakpoints in the project
 - `set_breakpoint` - Set a line breakpoint with optional condition
 - `remove_breakpoint` - Remove a breakpoint by ID
-- `set_exception_breakpoint` - Set an exception breakpoint for caught/uncaught exceptions
 
 #### Execution Control Tools (6 tools)
 - `resume` - Resume execution from a paused state

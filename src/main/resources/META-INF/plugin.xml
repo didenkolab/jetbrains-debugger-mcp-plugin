@@ -19,7 +19,6 @@ Set breakpoints, step through code, inspect variables, and evaluate expressionsâ
 <ul>
     <li><b>Line Breakpoints</b> - Set, remove, and list breakpoints at any location</li>
     <li><b>Conditional Breakpoints</b> - Add conditions that must be true to pause execution</li>
-    <li><b>Exception Breakpoints</b> - Break on caught or uncaught exceptions</li>
     <li><b>Tracepoints</b> - Log messages without pausing execution</li>
 </ul>
 

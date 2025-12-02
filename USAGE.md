@@ -1,6 +1,6 @@
 # Debugger MCP Server - Tool Reference
 
-This document provides detailed documentation for all 24 MCP tools available in the Debugger MCP Server plugin.
+This document provides detailed documentation for all 23 MCP tools available in the Debugger MCP Server plugin.
 
 ## Tool Overview
 
@@ -22,14 +22,13 @@ Tools are organized into categories based on functionality:
 | `stop_debug_session` | Stop a debug session |
 | `get_debug_session_status` | Get comprehensive session status |
 
-### Breakpoint Tools (4)
+### Breakpoint Tools (3)
 
 | Tool | Description |
 |------|-------------|
 | `list_breakpoints` | List all breakpoints |
 | `set_breakpoint` | Set a line breakpoint |
 | `remove_breakpoint` | Remove a breakpoint |
-| `set_exception_breakpoint` | Set an exception breakpoint |
 
 ### Execution Control Tools (6)
 
@@ -87,7 +86,6 @@ Tools are organized into categories based on functionality:
   - [list_breakpoints](#list_breakpoints)
   - [set_breakpoint](#set_breakpoint)
   - [remove_breakpoint](#remove_breakpoint)
-  - [set_exception_breakpoint](#set_exception_breakpoint)
 - [Execution Control Tools](#execution-control-tools)
   - [resume](#resume)
   - [pause](#pause)
@@ -683,55 +681,6 @@ Removes a breakpoint by ID or location.
 {
   "status": "removed",
   "message": "Breakpoint removed"
-}
-```
-
----
-
-### set_exception_breakpoint
-
-Sets an exception breakpoint to pause when exceptions are thrown.
-
-**Use when:**
-- Debugging exceptions
-- Finding where exceptions originate
-- Catching exceptions before they're caught by handlers
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `exception_class` | string | Yes | Fully qualified exception class name |
-| `caught` | boolean | No | Break on caught exceptions (default: true) |
-| `uncaught` | boolean | No | Break on uncaught exceptions (default: true) |
-| `project_path` | string | No | Project path |
-
-**Example Request:**
-
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "set_exception_breakpoint",
-    "arguments": {
-      "exception_class": "java.lang.NullPointerException",
-      "caught": true,
-      "uncaught": true
-    }
-  }
-}
-```
-
-**Example Response:**
-
-```json
-{
-  "breakpointId": "ex_bp_123",
-  "status": "set",
-  "exceptionClass": "java.lang.NullPointerException",
-  "caught": true,
-  "uncaught": true,
-  "message": "Exception breakpoint set for NullPointerException"
 }
 ```
 
