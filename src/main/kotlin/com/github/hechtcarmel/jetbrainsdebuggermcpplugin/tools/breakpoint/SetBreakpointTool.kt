@@ -4,11 +4,13 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallR
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SetBreakpointResult
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
@@ -102,37 +104,33 @@ class SetBreakpointTool : AbstractMcpTool() {
         val breakpointManager = getDebuggerManager(project).breakpointManager
         val lineIndex = line - 1 // Convert to 0-based
 
-        // Find appropriate line breakpoint type
-        val breakpointTypes = XBreakpointType.EXTENSION_POINT_NAME.extensionList
-            .filterIsInstance<XLineBreakpointType<*>>()
-
-        val applicableType = breakpointTypes.firstOrNull { type ->
-            try {
-                type.canPutAt(virtualFile, lineIndex, project)
-            } catch (e: Exception) {
-                false
-            }
+        // Check if we can put a breakpoint at this location
+        val canPut = runReadAction {
+            XDebuggerUtil.getInstance().canPutBreakpointAt(project, virtualFile, lineIndex)
         }
 
-        if (applicableType == null) {
-            return createErrorResult("Cannot set breakpoint at $filePath:$line (no applicable breakpoint type)")
+        if (!canPut) {
+            return createErrorResult("Cannot set breakpoint at $filePath:$line (not a valid breakpoint location)")
         }
 
         return try {
-            val breakpoint = withContext(Dispatchers.Main) {
-                ApplicationManager.getApplication().runWriteAction<com.intellij.xdebugger.breakpoints.XLineBreakpoint<*>?> {
-                    @Suppress("UNCHECKED_CAST")
-                    val typedType = applicableType as XLineBreakpointType<XBreakpointProperties<*>>
-
-                    breakpointManager.addLineBreakpoint(
-                        typedType,
-                        virtualFile.url,
+            // Use XDebuggerUtil.toggleLineBreakpoint which properly handles type resolution
+            // and integrates with the debugger infrastructure
+            withContext(Dispatchers.Main) {
+                ApplicationManager.getApplication().invokeAndWait {
+                    // toggleLineBreakpoint is the same method called when clicking in the gutter
+                    // It properly resolves the breakpoint type using getBreakpointTypeByPosition()
+                    XDebuggerUtil.getInstance().toggleLineBreakpoint(
+                        project,
+                        virtualFile,
                         lineIndex,
-                        null,
                         temporary
                     )
                 }
             }
+
+            // Find the breakpoint that was just created
+            val breakpoint = findBreakpointAtLine(breakpointManager, virtualFile, lineIndex)
 
             if (breakpoint == null) {
                 return createErrorResult("Failed to create breakpoint at $filePath:$line")
@@ -172,5 +170,20 @@ class SetBreakpointTool : AbstractMcpTool() {
         } catch (e: Exception) {
             createErrorResult("Failed to set breakpoint: ${e.message}")
         }
+    }
+
+    /**
+     * Find a line breakpoint at the specified file and line.
+     */
+    private fun findBreakpointAtLine(
+        breakpointManager: com.intellij.xdebugger.breakpoints.XBreakpointManager,
+        virtualFile: com.intellij.openapi.vfs.VirtualFile,
+        lineIndex: Int
+    ): XLineBreakpoint<*>? {
+        return breakpointManager.allBreakpoints
+            .filterIsInstance<XLineBreakpoint<*>>()
+            .firstOrNull { bp ->
+                bp.fileUrl == virtualFile.url && bp.line == lineIndex
+            }
     }
 }
