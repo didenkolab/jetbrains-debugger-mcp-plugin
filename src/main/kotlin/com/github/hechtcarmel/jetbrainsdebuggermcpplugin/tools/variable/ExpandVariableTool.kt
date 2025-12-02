@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ExpandVariableResult
@@ -34,6 +35,8 @@ class ExpandVariableTool : AbstractMcpTool() {
         Only works on variables where hasChildren is true.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("Expand Variable")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -49,6 +52,7 @@ class ExpandVariableTool : AbstractMcpTool() {
         putJsonArray("required") {
             add(JsonPrimitive("variable_path"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

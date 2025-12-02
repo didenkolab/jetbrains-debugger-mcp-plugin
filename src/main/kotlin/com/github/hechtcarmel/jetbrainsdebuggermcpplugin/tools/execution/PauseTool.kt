@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.execution
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ExecutionControlResult
@@ -25,6 +26,8 @@ class PauseTool : AbstractMcpTool() {
         After pausing, you can inspect variables and step through code.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.idempotentMutable("Pause Execution")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -34,6 +37,7 @@ class PauseTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

@@ -1,6 +1,7 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools
 
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ContentBlock
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
@@ -56,6 +57,14 @@ import kotlinx.serialization.json.put
 abstract class AbstractMcpTool : McpTool {
 
     /**
+     * Default annotations for tools. Subclasses should override this
+     * with appropriate values based on the tool's behavior.
+     *
+     * Default is read-only and idempotent as a safe default.
+     */
+    override val annotations: ToolAnnotations = ToolAnnotations.readOnly("Tool")
+
+    /**
      * JSON serializer configured for tool results.
      * - Ignores unknown keys for forward compatibility
      * - Encodes default values
@@ -97,6 +106,60 @@ abstract class AbstractMcpTool : McpTool {
                 put("type", "string")
                 put("description", "Debug session ID. Uses current session if omitted.")
             }
+        }
+
+        /**
+         * Creates an integer property with min/max bounds and optional default.
+         *
+         * @param description The property description
+         * @param default The default value (null if no default)
+         * @param minimum The minimum allowed value (null if no minimum)
+         * @param maximum The maximum allowed value (null if no maximum)
+         * @return JSON Schema definition for the property
+         */
+        fun integerProperty(
+            description: String,
+            default: Int? = null,
+            minimum: Int? = null,
+            maximum: Int? = null
+        ): JsonObject = buildJsonObject {
+            put("type", "integer")
+            put("description", description)
+            default?.let { put("default", it) }
+            minimum?.let { put("minimum", it) }
+            maximum?.let { put("maximum", it) }
+        }
+
+        /**
+         * Creates a boolean property with optional default.
+         *
+         * @param description The property description
+         * @param default The default value (null if no default)
+         * @return JSON Schema definition for the property
+         */
+        fun booleanProperty(
+            description: String,
+            default: Boolean? = null
+        ): JsonObject = buildJsonObject {
+            put("type", "boolean")
+            put("description", description)
+            default?.let { put("default", it) }
+        }
+
+        /**
+         * Creates a string property with optional default.
+         *
+         * @param description The property description
+         * @param default The default value (null if no default)
+         * @return JSON Schema definition for the property
+         */
+        fun stringProperty(
+            description: String,
+            default: String? = null
+        ): JsonObject = buildJsonObject {
+            put("type", "string")
+            put("description", description)
+            default?.let { put("default", it) }
         }
     }
 

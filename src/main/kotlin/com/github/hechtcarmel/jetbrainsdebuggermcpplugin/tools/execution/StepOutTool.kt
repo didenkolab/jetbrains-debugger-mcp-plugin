@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.execution
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ExecutionControlResult
@@ -22,6 +23,8 @@ class StepOutTool : AbstractMcpTool() {
         Use after stepping into a method to quickly return to the calling code.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.mutable("Step Out")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -31,6 +34,7 @@ class StepOutTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

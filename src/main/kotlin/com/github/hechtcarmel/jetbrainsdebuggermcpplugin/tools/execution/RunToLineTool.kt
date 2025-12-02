@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.execution
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ExecutionControlResult
@@ -26,6 +27,8 @@ class RunToLineTool : AbstractMcpTool() {
         Similar to setting a temporary breakpoint and resuming.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.mutable("Run to Line")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -47,6 +50,7 @@ class RunToLineTool : AbstractMcpTool() {
             add(JsonPrimitive("file_path"))
             add(JsonPrimitive("line"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

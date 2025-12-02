@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.navigation
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SourceContext
@@ -27,6 +28,8 @@ class GetSourceContextTool : AbstractMcpTool() {
         Use to see the code around where execution is paused or at any file location.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("Get Source Context")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -45,16 +48,19 @@ class GetSourceContextTool : AbstractMcpTool() {
             }
             putJsonObject("lines_before") {
                 put("type", "integer")
-                put("description", "Number of lines to include before the target line. Default: 5")
+                put("description", "Number of lines to include before the target line")
+                put("default", 5)
                 put("minimum", 0)
             }
             putJsonObject("lines_after") {
                 put("type", "integer")
-                put("description", "Number of lines to include after the target line. Default: 5")
+                put("description", "Number of lines to include after the target line")
+                put("default", 5)
                 put("minimum", 0)
             }
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

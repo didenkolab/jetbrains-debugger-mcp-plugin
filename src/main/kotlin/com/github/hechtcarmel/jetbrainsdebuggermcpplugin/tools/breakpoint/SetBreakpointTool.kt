@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SetBreakpointResult
@@ -40,6 +41,8 @@ class SetBreakpointTool : AbstractMcpTool() {
         Use {expr} in log_message to evaluate expressions.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.idempotentMutable("Set Breakpoint")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -69,21 +72,25 @@ class SetBreakpointTool : AbstractMcpTool() {
                     add(JsonPrimitive("thread"))
                     add(JsonPrimitive("none"))
                 }
-                put("description", "Thread suspend policy. Default: all")
+                put("description", "Thread suspend policy")
+                put("default", "all")
             }
             putJsonObject("enabled") {
                 put("type", "boolean")
-                put("description", "Whether breakpoint is enabled. Default: true")
+                put("description", "Whether breakpoint is enabled")
+                put("default", true)
             }
             putJsonObject("temporary") {
                 put("type", "boolean")
-                put("description", "Remove after first hit. Default: false")
+                put("description", "Remove after first hit")
+                put("default", false)
             }
         }
         putJsonArray("required") {
             add(JsonPrimitive("file_path"))
             add(JsonPrimitive("line"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

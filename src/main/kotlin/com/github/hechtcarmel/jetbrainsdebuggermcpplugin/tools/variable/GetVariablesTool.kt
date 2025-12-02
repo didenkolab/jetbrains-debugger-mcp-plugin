@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.VariableInfo
@@ -37,6 +38,8 @@ class GetVariablesTool : AbstractMcpTool() {
         Use expand_variable to see children of complex objects.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("Get Variables")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -46,11 +49,13 @@ class GetVariablesTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
             putJsonObject("frame_index") {
                 put("type", "integer")
-                put("description", "Stack frame index (0 = current frame). Default: 0")
+                put("description", "Stack frame index (0 = current frame)")
+                put("default", 0)
                 put("minimum", 0)
             }
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

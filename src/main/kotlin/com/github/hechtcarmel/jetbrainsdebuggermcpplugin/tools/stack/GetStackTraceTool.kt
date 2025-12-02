@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.StackFrameInfo
@@ -28,6 +29,8 @@ class GetStackTraceTool : AbstractMcpTool() {
         Use to understand the call path that led to the current execution point.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("Get Stack Trace")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -37,12 +40,14 @@ class GetStackTraceTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
             putJsonObject("max_frames") {
                 put("type", "integer")
-                put("description", "Maximum number of frames to return. Default: 50")
+                put("description", "Maximum number of frames to return")
+                put("default", 50)
                 put("minimum", 1)
                 put("maximum", 200)
             }
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

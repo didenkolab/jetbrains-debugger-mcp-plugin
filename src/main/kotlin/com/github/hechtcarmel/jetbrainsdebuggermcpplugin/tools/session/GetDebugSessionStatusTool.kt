@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.session
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.*
@@ -48,6 +49,8 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
         Use after hitting a breakpoint or stepping to see what happened.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("Get Debug Status")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -57,22 +60,31 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
             putJsonObject("include_variables") {
                 put("type", "boolean")
-                put("description", "Include variables from current frame. Default: true")
+                put("description", "Include variables from current frame")
+                put("default", true)
             }
             putJsonObject("include_source_context") {
                 put("type", "boolean")
-                put("description", "Include source code around current line. Default: true")
+                put("description", "Include source code around current line")
+                put("default", true)
             }
             putJsonObject("source_context_lines") {
                 put("type", "integer")
-                put("description", "Lines of context above/below current line. Default: 5")
+                put("description", "Lines of context above/below current line")
+                put("default", 5)
+                put("minimum", 0)
+                put("maximum", 50)
             }
             putJsonObject("max_stack_frames") {
                 put("type", "integer")
-                put("description", "Maximum stack frames in summary. Default: 10")
+                put("description", "Maximum stack frames in summary")
+                put("default", 10)
+                put("minimum", 1)
+                put("maximum", 200)
             }
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

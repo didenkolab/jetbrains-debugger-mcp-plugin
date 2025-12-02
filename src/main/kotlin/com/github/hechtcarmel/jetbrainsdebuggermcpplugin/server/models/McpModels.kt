@@ -34,8 +34,59 @@ data class InitializeResult(
 data class ToolDefinition(
     val name: String,
     val description: String,
-    val inputSchema: JsonObject
+    val inputSchema: JsonObject,
+    val annotations: ToolAnnotations? = null
 )
+
+/**
+ * Tool annotations provide hints about tool behavior to help clients
+ * categorize and present tools appropriately.
+ *
+ * Based on MCP specification 2025-06-18.
+ */
+@Serializable
+data class ToolAnnotations(
+    val title: String? = null,
+    val readOnlyHint: Boolean? = null,
+    val destructiveHint: Boolean? = null,
+    val idempotentHint: Boolean? = null,
+    val openWorldHint: Boolean? = null
+) {
+    companion object {
+        /**
+         * Annotations for read-only inspection tools (list, get, etc.)
+         */
+        fun readOnly(title: String) = ToolAnnotations(
+            title = title,
+            readOnlyHint = true,
+            destructiveHint = false,
+            idempotentHint = true,
+            openWorldHint = false
+        )
+
+        /**
+         * Annotations for state-changing tools that are NOT idempotent
+         */
+        fun mutable(title: String, destructive: Boolean = false) = ToolAnnotations(
+            title = title,
+            readOnlyHint = false,
+            destructiveHint = destructive,
+            idempotentHint = false,
+            openWorldHint = false
+        )
+
+        /**
+         * Annotations for state-changing tools that ARE idempotent
+         */
+        fun idempotentMutable(title: String, destructive: Boolean = false) = ToolAnnotations(
+            title = title,
+            readOnlyHint = false,
+            destructiveHint = destructive,
+            idempotentHint = true,
+            openWorldHint = false
+        )
+    }
+}
 
 @Serializable
 data class ToolsListResult(

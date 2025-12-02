@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.RemoveBreakpointResult
@@ -29,6 +30,8 @@ class RemoveBreakpointTool : AbstractMcpTool() {
         Returns confirmation of removal.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.idempotentMutable("Remove Breakpoint", destructive = true)
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -42,6 +45,7 @@ class RemoveBreakpointTool : AbstractMcpTool() {
         putJsonArray("required") {
             add(JsonPrimitive("breakpoint_id"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

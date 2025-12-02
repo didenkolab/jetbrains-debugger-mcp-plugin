@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ThreadInfo
@@ -27,6 +28,8 @@ class ListThreadsTool : AbstractMcpTool() {
         Use to understand the multi-threaded state of the application.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("List Threads")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -36,6 +39,7 @@ class ListThreadsTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.session
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.DebugSessionInfo
@@ -36,6 +37,8 @@ class StartDebugSessionTool : AbstractMcpTool() {
         Returns the new session ID and status.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.mutable("Start Debug Session")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -49,6 +52,7 @@ class StartDebugSessionTool : AbstractMcpTool() {
         putJsonArray("required") {
             add(JsonPrimitive("configuration_name"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

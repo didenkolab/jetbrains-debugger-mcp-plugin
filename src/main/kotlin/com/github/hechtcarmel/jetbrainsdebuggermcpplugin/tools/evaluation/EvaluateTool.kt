@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.evaluation
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.EvaluateResponse
@@ -35,6 +36,8 @@ class EvaluateTool : AbstractMcpTool() {
         Use to inspect values, call methods, or modify state during debugging.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.mutable("Evaluate Expression")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -48,13 +51,15 @@ class EvaluateTool : AbstractMcpTool() {
             }
             putJsonObject("frame_index") {
                 put("type", "integer")
-                put("description", "Stack frame index for evaluation context. Default: 0 (current frame)")
+                put("description", "Stack frame index for evaluation context (0 = current frame)")
+                put("default", 0)
                 put("minimum", 0)
             }
         }
         putJsonArray("required") {
             add(JsonPrimitive("expression"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

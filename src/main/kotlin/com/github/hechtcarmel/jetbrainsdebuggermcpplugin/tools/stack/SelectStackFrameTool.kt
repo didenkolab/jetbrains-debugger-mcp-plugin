@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SelectFrameResult
@@ -26,6 +27,8 @@ class SelectStackFrameTool : AbstractMcpTool() {
         Frame index 0 is the current (topmost) frame.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.idempotentMutable("Select Stack Frame")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -42,6 +45,7 @@ class SelectStackFrameTool : AbstractMcpTool() {
         putJsonArray("required") {
             add(JsonPrimitive("frame_index"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

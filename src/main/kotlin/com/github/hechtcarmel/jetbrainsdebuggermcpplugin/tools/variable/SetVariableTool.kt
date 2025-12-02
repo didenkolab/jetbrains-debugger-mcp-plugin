@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.SetVariableResult
@@ -35,6 +36,8 @@ class SetVariableTool : AbstractMcpTool() {
         Use get_variables first to identify available variables.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.mutable("Set Variable", destructive = true)
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -55,6 +58,7 @@ class SetVariableTool : AbstractMcpTool() {
             add(JsonPrimitive("variable_name"))
             add(JsonPrimitive("new_value"))
         }
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

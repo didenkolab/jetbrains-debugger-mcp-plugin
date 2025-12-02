@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.runconfig
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.RunConfigurationInfo
@@ -30,6 +31,8 @@ class ListRunConfigurationsTool : AbstractMcpTool() {
         Returns configuration name, type, and whether it can be run or debugged.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.readOnly("List Run Configurations")
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -37,6 +40,7 @@ class ListRunConfigurationsTool : AbstractMcpTool() {
             put(propName, propSchema)
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

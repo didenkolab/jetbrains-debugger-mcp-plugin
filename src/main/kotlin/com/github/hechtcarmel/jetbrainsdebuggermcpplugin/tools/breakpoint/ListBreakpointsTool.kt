@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.breakpoint
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.BreakpointInfo
@@ -21,10 +22,12 @@ class ListBreakpointsTool : AbstractMcpTool() {
     override val name = "list_breakpoints"
 
     override val description = """
-        Lists all breakpoints in the project including line breakpoints
-        and their properties (conditions, log messages, etc.).
+        Lists all breakpoints in the project including line breakpoints,
+        exception breakpoints, and their properties (conditions, log messages, etc.).
         Use to see what breakpoints are set before debugging.
     """.trimIndent()
+
+    override val annotations = ToolAnnotations.readOnly("List Breakpoints")
 
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
@@ -33,6 +36,7 @@ class ListBreakpointsTool : AbstractMcpTool() {
             put(propName, propSchema)
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {

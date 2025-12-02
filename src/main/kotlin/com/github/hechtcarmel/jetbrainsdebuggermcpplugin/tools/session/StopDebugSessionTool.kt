@@ -1,5 +1,6 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.session
 
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolAnnotations
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.models.ToolCallResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.AbstractMcpTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.StopSessionResult
@@ -24,6 +25,8 @@ class StopDebugSessionTool : AbstractMcpTool() {
         Use list_debug_sessions to see available sessions and their IDs.
     """.trimIndent()
 
+    override val annotations = ToolAnnotations.mutable("Stop Debug Session", destructive = true)
+
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")
         putJsonObject("properties") {
@@ -33,6 +36,7 @@ class StopDebugSessionTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
         }
         put("required", buildJsonArray { })
+        put("additionalProperties", false)
     }
 
     override suspend fun doExecute(project: Project, arguments: JsonObject): ToolCallResult {
