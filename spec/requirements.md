@@ -137,7 +137,7 @@ All tools accept an optional `projectPath` parameter to specify which project to
 **Input:**
 ```json
 {
-  "name": "run_configuration",
+  "name": "execute_run_configuration",
   "arguments": {
     "projectPath": "/path/to/project",
     "configuration_name": "MyApplication",
@@ -530,7 +530,7 @@ All tools accept an optional `projectPath` parameter to specify which project to
 **Input:**
 ```json
 {
-  "name": "resume",
+  "name": "resume_execution",
   "arguments": {
     "projectPath": "/path/to/project",
     "session_id": "session_uuid"
@@ -549,7 +549,7 @@ All tools accept an optional `projectPath` parameter to specify which project to
 **Input:**
 ```json
 {
-  "name": "pause",
+  "name": "pause_execution",
   "arguments": {
     "projectPath": "/path/to/project",
     "session_id": "session_uuid"
@@ -840,13 +840,13 @@ All tools accept an optional `projectPath` parameter to specify which project to
 
 ### 2.7 Expression Evaluation
 
-#### FR-2.7.1: Evaluate
+#### FR-2.7.1: Evaluate Expression
 **Description:** Evaluate an expression or code fragment in the current debug context.
 
 **Input:**
 ```json
 {
-  "name": "evaluate",
+  "name": "evaluate_expression",
   "arguments": {
     "projectPath": "/path/to/project",
     "session_id": "session_uuid",
@@ -1436,7 +1436,7 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | Tool Name | Category | Priority |
 |-----------|----------|----------|
 | `list_run_configurations` | Run Configs | P0 |
-| `run_configuration` | Run Configs | P0 |
+| `execute_run_configuration` | Run Configs | P0 |
 | `list_debug_sessions` | Debug Session | P0 |
 | `start_debug_session` | Debug Session | P0 |
 | `stop_debug_session` | Debug Session | P0 |
@@ -1444,8 +1444,8 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | `list_breakpoints` | Breakpoints | P0 |
 | `set_breakpoint` | Breakpoints | P0 |
 | `remove_breakpoint` | Breakpoints | P0 |
-| `resume` | Execution | P0 |
-| `pause` | Execution | P0 |
+| `resume_execution` | Execution | P0 |
+| `pause_execution` | Execution | P0 |
 | `step_over` | Execution | P0 |
 | `step_into` | Execution | P0 |
 | `step_out` | Execution | P1 |
@@ -1456,7 +1456,7 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | `get_variables` | Variables | P0 |
 | `expand_variable` | Variables | P1 |
 | `set_variable` | Variables | P2 |
-| `evaluate` | Evaluation | P0 |
+| `evaluate_expression` | Evaluation | P0 |
 | `get_source_context` | Navigation | P1 |
 
 **Total Tools: 23**
@@ -1468,7 +1468,7 @@ Tools will be registered using the JetBrains MCP Server extension point:
 
 **Consolidation Notes:**
 - `toggle_breakpoint` removed (use `set_breakpoint` / `remove_breakpoint`)
-- `evaluate_expression` and `evaluate_code_fragment` merged into `evaluate`
+- Single `evaluate_expression` tool handles both simple expressions and multi-line code fragments
 
 ---
 

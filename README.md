@@ -192,7 +192,7 @@ The plugin provides **23 MCP tools** organized by category:
 | Tool | Description |
 |------|-------------|
 | `list_run_configurations` | List all available run configurations in the project |
-| `run_configuration` | Execute a run configuration in debug or run mode |
+| `execute_run_configuration` | Execute a run configuration in debug or run mode |
 
 ### Debug Session Tools
 
@@ -215,8 +215,8 @@ The plugin provides **23 MCP tools** organized by category:
 
 | Tool | Description |
 |------|-------------|
-| `resume` | Resume paused execution |
-| `pause` | Pause running execution |
+| `resume_execution` | Resume paused execution |
+| `pause_execution` | Pause running execution |
 | `step_over` | Step over to next line (without entering methods) |
 | `step_into` | Step into method calls |
 | `step_out` | Step out of current method |
@@ -248,7 +248,7 @@ The plugin provides **23 MCP tools** organized by category:
 
 | Tool | Description |
 |------|-------------|
-| `evaluate` | Evaluate an expression or code fragment in debug context |
+| `evaluate_expression` | Evaluate an expression or code fragment in debug context |
 
 > **Note**: For detailed tool documentation with parameters, examples, and response formats, see [USAGE.md](USAGE.md).
 

@@ -368,27 +368,33 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
         val file = position.file
         val currentLine = position.line + 1
 
-        val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-        val startLine = maxOf(1, currentLine - contextLines)
-        val endLine = minOf(document.lineCount, currentLine + contextLines)
+        val (startLine, endLine, lines) = readAction {
+            val document = FileDocumentManager.getInstance().getDocument(file)
+                ?: return@readAction null
 
-        val lines = (startLine..endLine).mapNotNull { lineNum ->
-            try {
-                val lineIndex = lineNum - 1
-                if (lineIndex >= 0 && lineIndex < document.lineCount) {
-                    val lineStart = document.getLineStartOffset(lineIndex)
-                    val lineEnd = document.getLineEndOffset(lineIndex)
-                    val content = document.getText(TextRange(lineStart, lineEnd))
-                    SourceLine(
-                        number = lineNum,
-                        content = content,
-                        isCurrent = lineNum == currentLine
-                    )
-                } else null
-            } catch (e: Exception) {
-                null
+            val start = maxOf(1, currentLine - contextLines)
+            val end = minOf(document.lineCount, currentLine + contextLines)
+
+            val sourceLines = (start..end).mapNotNull { lineNum ->
+                try {
+                    val lineIndex = lineNum - 1
+                    if (lineIndex >= 0 && lineIndex < document.lineCount) {
+                        val lineStart = document.getLineStartOffset(lineIndex)
+                        val lineEnd = document.getLineEndOffset(lineIndex)
+                        val content = document.getText(TextRange(lineStart, lineEnd))
+                        SourceLine(
+                            number = lineNum,
+                            content = content,
+                            isCurrent = lineNum == currentLine
+                        )
+                    } else null
+                } catch (e: Exception) {
+                    null
+                }
             }
-        }
+
+            Triple(start, end, sourceLines)
+        } ?: return null
 
         val breakpointManager = getDebuggerManager(project).breakpointManager
         val breakpointsInView = breakpointManager.allBreakpoints

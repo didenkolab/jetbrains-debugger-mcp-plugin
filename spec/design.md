@@ -219,7 +219,7 @@ src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
 │   │
 │   ├── runconfig/                         # Run configuration tools
 │   │   ├── ListRunConfigurationsTool.kt   # list_run_configurations
-│   │   └── RunConfigurationTool.kt        # run_configuration
+│   │   └── RunConfigurationTool.kt        # execute_run_configuration
 │   │
 │   ├── breakpoint/                        # Breakpoint tools
 │   │   ├── ListBreakpointsTool.kt         # list_breakpoints
@@ -227,8 +227,8 @@ src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
 │   │   └── RemoveBreakpointTool.kt        # remove_breakpoint
 │   │
 │   ├── execution/                         # Execution control tools
-│   │   ├── ResumeTool.kt                  # resume
-│   │   ├── PauseTool.kt                   # pause
+│   │   ├── ResumeTool.kt                  # resume_execution
+│   │   ├── PauseTool.kt                   # pause_execution
 │   │   ├── StepOverTool.kt                # step_over
 │   │   ├── StepIntoTool.kt                # step_into
 │   │   ├── StepOutTool.kt                 # step_out
@@ -245,7 +245,7 @@ src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
 │   │   └── SetVariableTool.kt             # set_variable
 │   │
 │   ├── evaluation/                        # Expression evaluation tools
-│   │   └── EvaluateTool.kt                # evaluate
+│   │   └── EvaluateTool.kt                # evaluate_expression
 │   │
 │   ├── navigation/                        # Source navigation tools
 │   │   └── GetSourceContextTool.kt        # get_source_context
@@ -2070,7 +2070,7 @@ class SetBreakpointToolTest : BasePlatformTestCase() {
 | Tool Name | Category | Priority |
 |-----------|----------|----------|
 | `list_run_configurations` | Run Configs | P0 |
-| `run_configuration` | Run Configs | P0 |
+| `execute_run_configuration` | Run Configs | P0 |
 | `list_debug_sessions` | Debug Session | P0 |
 | `start_debug_session` | Debug Session | P0 |
 | `stop_debug_session` | Debug Session | P0 |
@@ -2078,8 +2078,8 @@ class SetBreakpointToolTest : BasePlatformTestCase() {
 | `list_breakpoints` | Breakpoints | P0 |
 | `set_breakpoint` | Breakpoints | P0 |
 | `remove_breakpoint` | Breakpoints | P0 |
-| `resume` | Execution | P0 |
-| `pause` | Execution | P0 |
+| `resume_execution` | Execution | P0 |
+| `pause_execution` | Execution | P0 |
 | `step_over` | Execution | P0 |
 | `step_into` | Execution | P0 |
 | `step_out` | Execution | P1 |
@@ -2090,7 +2090,7 @@ class SetBreakpointToolTest : BasePlatformTestCase() {
 | `get_variables` | Variables | P0 |
 | `expand_variable` | Variables | P1 |
 | `set_variable` | Variables | P2 |
-| `evaluate` | Evaluation | P0 |
+| `evaluate_expression` | Evaluation | P0 |
 | `get_source_context` | Navigation | P1 |
 
 **Total Tools: 23**
