@@ -15,7 +15,7 @@ A JetBrains IDE plugin that exposes an **MCP (Model Context Protocol) server**, 
 
 **Debug Session Management**
 - **Start/Stop Sessions** - Launch any run configuration in debug mode
-- **Rich Status** - Get comprehensive state in a single call (variables, stack, watches, source context)
+- **Rich Status** - Get comprehensive state in a single call (variables, stack, source context)
 - **Multi-Session Support** - Manage multiple concurrent debug sessions
 
 **Breakpoint Management**
@@ -33,7 +33,6 @@ A JetBrains IDE plugin that exposes an **MCP (Model Context Protocol) server**, 
 - **View Variables** - Inspect local variables, arguments, and object fields
 - **Expand Objects** - Drill into complex data structures
 - **Modify Values** - Change variable values during debugging
-- **Watch Expressions** - Monitor expressions across debug steps
 
 **Expression Evaluation**
 - **Evaluate Expressions** - Run arbitrary expressions in the current context
@@ -48,10 +47,10 @@ A JetBrains IDE plugin that exposes an **MCP (Model Context Protocol) server**, 
 
 Unlike manual debugging, this plugin enables:
 - **Autonomous AI Debugging** - Your AI assistant can debug code without human intervention
-- **Rich Context in Single Calls** - Get variables, stack, watches, and source in one request
+- **Rich Context in Single Calls** - Get variables, stack, and source in one request
 - **Programmatic Breakpoint Control** - Set conditional breakpoints with complex expressions
 - **Cross-IDE Compatibility** - Works with any JetBrains IDE that supports XDebugger
-- **26 Comprehensive Tools** - Full debugging capability through MCP
+- **24 Comprehensive Tools** - Full debugging capability through MCP
 
 Perfect for AI-assisted development workflows where you want your assistant to investigate bugs, validate fixes, or explore code behavior autonomously.
 <!-- Plugin description end -->
@@ -187,7 +186,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Available Tools
 
-The plugin provides **26 MCP tools** organized by category:
+The plugin provides **24 MCP tools** organized by category:
 
 ### Run Configuration Tools
 
@@ -203,7 +202,7 @@ The plugin provides **26 MCP tools** organized by category:
 | `list_debug_sessions` | List all active debug sessions with state and metadata |
 | `start_debug_session` | Start a new debug session for a run configuration |
 | `stop_debug_session` | Stop/terminate a debug session |
-| `get_debug_session_status` | Get comprehensive status (variables, stack, watches, source) in one call |
+| `get_debug_session_status` | Get comprehensive status (variables, stack, source) in one call |
 
 ### Breakpoint Tools
 
@@ -240,13 +239,6 @@ The plugin provides **26 MCP tools** organized by category:
 | `get_variables` | Get all variables visible in current stack frame |
 | `expand_variable` | Drill into object properties/children |
 | `set_variable` | Modify a variable's value during debugging |
-
-### Watch Tools
-
-| Tool | Description |
-|------|-------------|
-| `add_watch` | Add a watch expression to monitor |
-| `remove_watch` | Remove a watch expression |
 
 ### Navigation Tools
 

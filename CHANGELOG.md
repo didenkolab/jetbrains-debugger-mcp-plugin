@@ -20,7 +20,7 @@
 - `list_debug_sessions` - List all active debug sessions
 - `start_debug_session` - Start a new debug session
 - `stop_debug_session` - Stop a debug session
-- `get_debug_session_status` - Get comprehensive session status with variables, watches, stack trace, and source context
+- `get_debug_session_status` - Get comprehensive session status with variables, stack trace, and source context
 
 #### Breakpoint Tools (4 tools)
 - `list_breakpoints` - List all breakpoints in the project
@@ -45,10 +45,6 @@
 - `get_variables` - Get variables in current frame
 - `expand_variable` - Expand a composite variable to see children
 - `set_variable` - Modify a variable value at runtime
-
-#### Watch Tools (2 tools)
-- `add_watch` - Add a watch expression
-- `remove_watch` - Remove a watch expression
 
 #### Navigation Tools (1 tool)
 - `get_source_context` - Get source code around a location

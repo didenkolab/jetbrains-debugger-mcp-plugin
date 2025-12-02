@@ -67,7 +67,6 @@
   │   ├── stack/
   │   ├── variable/
   │   ├── evaluation/
-  │   ├── watch/
   │   ├── navigation/
   │   └── models/
   ├── debugger/
@@ -247,9 +246,7 @@
 
 - [x] **3.8** Create `tools/models/VariableModels.kt`
   - [x] Define `VariableInfo` data class
-  - [x] Define `WatchInfo` data class
   - [x] Define `VariablesResult`, `ExpandVariableResult`, `SetVariableResult` data classes
-  - [x] Define `AddWatchResult`, `RemoveWatchResult` data classes
 
 - [x] **3.9** Create `tools/models/EvaluationModels.kt`
   - [x] Define `EvaluationResult` data class
@@ -314,7 +311,6 @@
     - [x] Current location
     - [x] Stack summary (limited frames)
     - [x] Variables (if requested)
-    - [x] Watches (placeholder)
     - [x] Source context (if requested)
     - [x] Thread info
   - [x] Handle async callbacks with suspendCancellableCoroutine
@@ -642,26 +638,15 @@
   - [x] Use XValueModifier to set value
   - [x] Return confirmation
 
-- [x] **8.3** Create `tools/watch/AddWatchTool.kt`
-  - [x] Define name, description, inputSchema (expression, session_id?)
-  - [x] Add watch expression to session
-  - [x] Return watch info
-
-- [x] **8.4** Create `tools/watch/RemoveWatchTool.kt`
-  - [x] Define name, description, inputSchema (watch_id, session_id?)
-  - [x] Find watch by ID
-  - [x] Remove watch
-  - [x] Return confirmation
-
-- [x] **8.5** Register P2 tools in ToolRegistry
+- [x] **8.3** Register P2 tools in ToolRegistry
   - [x] Add to registerBuiltInTools()
 
-- [x] **8.6** Test P2 tools
+- [x] **8.4** Test P2 tools
   - [x] Build verification passed
   - [x] All tools registered
 
-- [x] **8.7** Update tool count in documentation
-  - [x] Verified all 26 tools are registered
+- [x] **8.5** Update tool count in documentation
+  - [x] Verified all 24 tools are registered
 
 - [x] **8.8** Full integration test
   - [x] Build passes

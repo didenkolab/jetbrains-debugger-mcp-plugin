@@ -25,8 +25,6 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack.SelectStack
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable.ExpandVariableTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable.GetVariablesTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable.SetVariableTool
-import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.watch.AddWatchTool
-import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.watch.RemoveWatchTool
 import java.util.concurrent.ConcurrentHashMap
 
 class ToolRegistry {
@@ -98,10 +96,6 @@ class ToolRegistry {
 
         // Variable Tools (P2)
         register(SetVariableTool())
-
-        // Watch Tools (P2)
-        register(AddWatchTool())
-        register(RemoveWatchTool())
 
         // Navigation Tools (P1)
         register(GetSourceContextTool())

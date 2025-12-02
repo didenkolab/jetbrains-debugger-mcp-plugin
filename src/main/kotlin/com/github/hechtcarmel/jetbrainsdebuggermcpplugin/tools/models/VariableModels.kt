@@ -19,21 +19,6 @@ data class VariableInfo(
 )
 
 /**
- * Watch expression information.
- *
- * Returned as part of DebugSessionStatus and by watch-related tools.
- */
-@Serializable
-data class WatchInfo(
-    val id: String,
-    val expression: String,
-    val value: String? = null,
-    val type: String? = null,
-    val hasChildren: Boolean = false,
-    val error: String? = null
-)
-
-/**
  * Result of get_variables tool.
  */
 @Serializable
@@ -66,25 +51,5 @@ data class SetVariableResult(
     val oldValue: String,
     val newValue: String,
     val type: String,
-    val message: String
-)
-
-/**
- * Result of add_watch tool.
- */
-@Serializable
-data class AddWatchResult(
-    val sessionId: String,
-    val watch: WatchInfo,
-    val message: String
-)
-
-/**
- * Result of remove_watch tool.
- */
-@Serializable
-data class RemoveWatchResult(
-    val sessionId: String,
-    val watchId: String,
     val message: String
 )

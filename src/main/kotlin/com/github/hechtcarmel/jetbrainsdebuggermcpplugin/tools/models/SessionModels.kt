@@ -34,7 +34,6 @@ data class DebugSessionStatus(
     val stackSummary: List<StackFrameInfo> = emptyList(),
     val totalStackDepth: Int = 0,
     val variables: List<VariableInfo> = emptyList(),
-    val watches: List<WatchInfo> = emptyList(),
     val sourceContext: SourceContext? = null,
     val currentThread: ThreadInfo? = null,
     val threadCount: Int = 0

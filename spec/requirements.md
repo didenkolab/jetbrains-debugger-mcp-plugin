@@ -256,7 +256,7 @@ All tools accept an optional `projectPath` parameter to specify which project to
 - Returns error if session not found
 
 #### FR-2.2.4: Get Debug Session Status
-**Description:** Get comprehensive status of a debug session including variables, watches, stack summary, and source context. This is the primary tool for understanding the current debug state in a single call.
+**Description:** Get comprehensive status of a debug session including variables, stack summary, and source context. This is the primary tool for understanding the current debug state in a single call.
 
 **Input:**
 ```json
@@ -341,23 +341,6 @@ All tools accept an optional `projectPath` parameter to specify which project to
     }
   ],
 
-  "watches": [
-    {
-      "id": "watch_uuid",
-      "expression": "items.size()",
-      "value": "3",
-      "type": "int",
-      "error": null
-    },
-    {
-      "id": "watch_uuid2",
-      "expression": "user.getName()",
-      "value": null,
-      "type": null,
-      "error": "Cannot evaluate: user is null"
-    }
-  ],
-
   "source_context": {
     "file": "/path/to/File.java",
     "start_line": 37,
@@ -394,7 +377,6 @@ All tools accept an optional `projectPath` parameter to specify which project to
 - Shows breakpoint that was hit (if applicable) with condition details
 - Provides stack summary (top N frames) with total depth
 - Includes all variables visible in current frame (when `include_variables: true`)
-- Includes all watch expressions with current values or errors
 - Provides source code context around current line (when `include_source_context: true`)
 - Shows current thread information and total thread count
 - `paused_reason` indicates why execution stopped: `breakpoint`, `step`, `pause`, `exception`
@@ -936,43 +918,7 @@ All tools accept an optional `projectPath` parameter to specify which project to
 
 ---
 
-### 2.8 Watch Management
-
-**Note:** Watch values are automatically included in `get_debug_session_status` response. Use these tools to manage the watch list.
-
-#### FR-2.8.1: Add Watch
-**Description:** Add a watch expression.
-
-**Input:**
-```json
-{
-  "name": "add_watch",
-  "arguments": {
-    "projectPath": "/path/to/project",
-    "session_id": "session_uuid",
-    "expression": "myObject.getValue()"
-  }
-}
-```
-
-#### FR-2.8.3: Remove Watch
-**Description:** Remove a watch expression.
-
-**Input:**
-```json
-{
-  "name": "remove_watch",
-  "arguments": {
-    "projectPath": "/path/to/project",
-    "session_id": "session_uuid",
-    "watch_id": "watch_uuid"
-  }
-}
-```
-
----
-
-### 2.9 Source Navigation
+### 2.8 Source Navigation
 
 #### FR-2.9.1: Get Source Context
 **Description:** Get source code around the current execution point.
@@ -1391,7 +1337,6 @@ Tools will be registered using the JetBrains MCP Server extension point:
 
 **Deliverables:**
 - Expression evaluation
-- Watch management
 - Conditional breakpoints
 - Variable modification
 - Exception breakpoints
@@ -1492,7 +1437,6 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | **BGT** | Background Thread - non-UI threads |
 | **Brave Mode** | Setting to skip user confirmations |
 | **Stack Frame** | Single entry in call stack |
-| **Watch** | Expression monitored across debug steps |
 
 ---
 
@@ -1532,21 +1476,18 @@ Tools will be registered using the JetBrains MCP Server extension point:
 | `expand_variable` | Variables | P1 |
 | `set_variable` | Variables | P2 |
 | `evaluate` | Evaluation | P0 |
-| `add_watch` | Watches | P2 |
-| `remove_watch` | Watches | P2 |
 | `get_source_context` | Navigation | P1 |
 
-**Total Tools: 26**
+**Total Tools: 24**
 
 **Priority Legend:**
 - P0: Must have for MVP (16 tools)
 - P1: Important for usability (6 tools)
-- P2: Nice to have (4 tools)
+- P2: Nice to have (2 tools)
 
 **Consolidation Notes:**
 - `toggle_breakpoint` removed (use `set_breakpoint` / `remove_breakpoint`)
 - `evaluate_expression` and `evaluate_code_fragment` merged into `evaluate`
-- `list_watches` removed (watches included in `get_debug_session_status`)
 
 ---
 
@@ -1580,7 +1521,6 @@ Agent: I need to debug why the calculateTotal function returns wrong values.
      - paused_reason: "breakpoint"
      - current_location: { file: "Calculator.java", line: 42, method: "calculateTotal" }
      - variables: [items=[Item@1, Item@2], subtotal=0, tax=0]
-     - watches: []
      - source_context: (shows code around line 42)
      - stack_summary: [calculateTotal <- runTest <- main]
 
@@ -1634,40 +1574,6 @@ Agent: Run the build script to compile the project.
 
 2. Agent: run_configuration(projectPath="/Users/dev/myapp", configuration_name="Build All", wait_for_completion=true)
    → status: "completed", exit_code: 0, message: "Build successful"
-```
-
-### Example 4: Using Watches for Repeated Evaluation
-
-```
-Agent: I want to monitor how the 'total' variable changes through multiple steps.
-
-1. Agent: add_watch(projectPath="/Users/dev/myapp", expression="order.getTotal()")
-   → Watch added: watch_uuid
-
-2. Agent: add_watch(projectPath="/Users/dev/myapp", expression="order.getItems().size()")
-   → Watch added: watch_uuid2
-
-3. Agent: step_over(projectPath="/Users/dev/myapp")
-   → Stepped to line 55
-
-4. Agent: get_debug_session_status(projectPath="/Users/dev/myapp")
-   → Returns state including watches:
-     - watches: [
-         { expression: "order.getTotal()", value: "100.50" },
-         { expression: "order.getItems().size()", value: "3" }
-       ]
-
-5. Agent: step_over(projectPath="/Users/dev/myapp")
-   → Stepped to line 56
-
-6. Agent: get_debug_session_status(projectPath="/Users/dev/myapp")
-   → Returns updated state:
-     - watches: [
-         { expression: "order.getTotal()", value: "125.75" },  // Changed!
-         { expression: "order.getItems().size()", value: "4" }  // Changed!
-       ]
-
-7. Agent: "The total increased from 100.50 to 125.75 after adding item #4"
 ```
 
 These workflows demonstrate how an AI agent can efficiently debug code using fewer tool calls thanks to the rich `get_debug_session_status` response.

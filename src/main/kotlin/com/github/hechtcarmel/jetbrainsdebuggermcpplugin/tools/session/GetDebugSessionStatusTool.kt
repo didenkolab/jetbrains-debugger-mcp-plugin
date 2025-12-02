@@ -35,7 +35,7 @@ import kotlin.coroutines.resume
  * Gets comprehensive status of a debug session.
  *
  * This is the primary tool for understanding debug state in a single call.
- * Returns variables, stack summary, source context, watches, and more.
+ * Returns variables, stack summary, source context, and more.
  */
 class GetDebugSessionStatusTool : AbstractMcpTool() {
 
@@ -43,7 +43,7 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
 
     override val description = """
         Get comprehensive status of a debug session including state, location,
-        stack trace, variables, watches, and source context.
+        stack trace, variables, and source context.
         This is the primary tool for understanding the current debug state.
         Use after hitting a breakpoint or stepping to see what happened.
     """.trimIndent()
@@ -105,7 +105,6 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
             stackSummary = if (isPaused) getStackSummary(session, maxStackFrames) else emptyList(),
             totalStackDepth = if (isPaused) getStackDepth(session) else 0,
             variables = if (isPaused && includeVariables) getVariables(currentFrame) else emptyList(),
-            watches = emptyList(),
             sourceContext = if (isPaused && includeSourceContext)
                 getSourceContext(project, currentFrame, sourceContextLines) else null,
             currentThread = getCurrentThreadInfo(session),

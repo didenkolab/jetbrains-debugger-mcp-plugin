@@ -141,8 +141,7 @@ class ToolModelsTest {
             name = "myVar",
             value = "42",
             type = "Int",
-            hasChildren = false,
-            id = "var-1"
+            hasChildren = false
         )
 
         val encoded = json.encodeToString(variable)
@@ -158,41 +157,12 @@ class ToolModelsTest {
             name = "myObject",
             value = "Object@123",
             type = "MyClass",
-            hasChildren = true,
-            id = "var-2"
+            hasChildren = true
         )
 
         val encoded = json.encodeToString(variable)
 
         assertTrue(encoded.contains("\"hasChildren\":true"))
-    }
-
-    @Test
-    fun `WatchInfo serialization`() {
-        val watch = WatchInfo(
-            id = "watch-1",
-            expression = "x + y",
-            value = "10",
-            type = "Int",
-            hasChildren = false
-        )
-
-        val encoded = json.encodeToString(watch)
-
-        assertTrue(encoded.contains("\"expression\":\"x + y\""))
-    }
-
-    @Test
-    fun `WatchInfo with error serialization`() {
-        val watch = WatchInfo(
-            id = "watch-err",
-            expression = "undefined",
-            error = "Cannot evaluate expression"
-        )
-
-        val encoded = json.encodeToString(watch)
-
-        assertTrue(encoded.contains("\"error\":\"Cannot evaluate expression\""))
     }
 
     @Test

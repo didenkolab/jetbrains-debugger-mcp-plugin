@@ -1,6 +1,6 @@
 # Debugger MCP Server - Tool Reference
 
-This document provides detailed documentation for all 26 MCP tools available in the Debugger MCP Server plugin.
+This document provides detailed documentation for all 24 MCP tools available in the Debugger MCP Server plugin.
 
 ## Tool Overview
 
@@ -58,13 +58,6 @@ Tools are organized into categories based on functionality:
 | `expand_variable` | Expand composite variable |
 | `set_variable` | Modify variable value |
 
-### Watch Tools (2)
-
-| Tool | Description |
-|------|-------------|
-| `add_watch` | Add watch expression |
-| `remove_watch` | Remove watch expression |
-
 ### Navigation Tools (1)
 
 | Tool | Description |
@@ -110,9 +103,6 @@ Tools are organized into categories based on functionality:
   - [get_variables](#get_variables)
   - [expand_variable](#expand_variable)
   - [set_variable](#set_variable)
-- [Watch Tools](#watch-tools)
-  - [add_watch](#add_watch)
-  - [remove_watch](#remove_watch)
 - [Navigation Tools](#navigation-tools)
   - [get_source_context](#get_source_context)
 - [Evaluation Tools](#evaluation-tools)
@@ -376,7 +366,7 @@ Stops/terminates a debug session.
 
 > **Primary Debugging Tool** - Use this to understand the current debug state.
 
-Gets comprehensive status of a debug session including variables, stack, source context, and watches.
+Gets comprehensive status of a debug session including variables, stack, and source context.
 
 **Use when:**
 - After hitting a breakpoint to see current state
@@ -1341,95 +1331,6 @@ Modifies a variable's value during debugging.
   "oldValue": "\"user-123\"",
   "newValue": "\"admin\"",
   "message": "Variable 'userId' set to \"admin\""
-}
-```
-
----
-
-## Watch Tools
-
-### add_watch
-
-Adds a watch expression to monitor across debug steps.
-
-**Use when:**
-- Tracking expression values over time
-- Monitoring complex calculations
-- Watching object properties
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `expression` | string | Yes | Expression to watch |
-| `session_id` | string | No | Session ID |
-| `project_path` | string | No | Project path |
-
-**Example Request:**
-
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "add_watch",
-    "arguments": {
-      "expression": "user.getEmail()"
-    }
-  }
-}
-```
-
-**Example Response:**
-
-```json
-{
-  "status": "added",
-  "expression": "user.getEmail()",
-  "currentValue": "\"user@example.com\"",
-  "type": "String",
-  "message": "Watch added for: user.getEmail()"
-}
-```
-
----
-
-### remove_watch
-
-Removes a watch expression.
-
-**Use when:**
-- Cleaning up watches
-- Removing no longer needed expressions
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `expression` | string | Yes | Expression to remove |
-| `session_id` | string | No | Session ID |
-| `project_path` | string | No | Project path |
-
-**Example Request:**
-
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "remove_watch",
-    "arguments": {
-      "expression": "user.getEmail()"
-    }
-  }
-}
-```
-
-**Example Response:**
-
-```json
-{
-  "status": "removed",
-  "expression": "user.getEmail()",
-  "message": "Watch removed"
 }
 ```
 

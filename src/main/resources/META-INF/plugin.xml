@@ -11,7 +11,7 @@ Set breakpoints, step through code, inspect variables, and evaluate expressionsâ
 <h3>Debug Session Management</h3>
 <ul>
     <li><b>Start/Stop Debug Sessions</b> - Launch any run configuration in debug mode</li>
-    <li><b>Session Status</b> - Get comprehensive debug state in a single call including variables, watches, stack trace, and source context</li>
+    <li><b>Session Status</b> - Get comprehensive debug state in a single call including variables, stack trace, and source context</li>
     <li><b>Multi-Session Support</b> - Manage multiple concurrent debug sessions</li>
 </ul>
 
@@ -35,7 +35,6 @@ Set breakpoints, step through code, inspect variables, and evaluate expressionsâ
     <li><b>View Variables</b> - Inspect local variables, arguments, and object fields</li>
     <li><b>Expand Objects</b> - Drill into complex data structures</li>
     <li><b>Modify Values</b> - Change variable values during debugging</li>
-    <li><b>Watch Expressions</b> - Monitor expressions across debug steps</li>
 </ul>
 
 <h3>Expression Evaluation</h3>
@@ -55,7 +54,7 @@ Set breakpoints, step through code, inspect variables, and evaluate expressionsâ
 <h3>Why This Plugin?</h3>
 <ul>
     <li><b>AI-Driven Debugging</b> - Let your AI assistant debug code autonomously</li>
-    <li><b>Rich Context</b> - Single-call status provides variables, stack, watches, and source context</li>
+    <li><b>Rich Context</b> - Single-call status provides variables, stack, and source context</li>
     <li><b>Multi-IDE Support</b> - Works with any JetBrains IDE that has XDebugger</li>
     <li><b>Safe by Default</b> - Destructive operations require confirmation</li>
     <li><b>Zero Configuration</b> - Extends the built-in MCP server infrastructure</li>

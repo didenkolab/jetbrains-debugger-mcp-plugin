@@ -73,7 +73,7 @@
 │  │  │  │ Tools     │  │ Tools     │  │ Tools     │  │ Tools       │  │  │  │
 │  │  │  └───────────┘  └───────────┘  └───────────┘  └─────────────┘  │  │  │
 │  │  │  ┌───────────┐  ┌───────────┐  ┌───────────┐                   │  │  │
-│  │  │  │ Stack     │  │Evaluation │  │ Watch     │                   │  │  │
+│  │  │  │ Stack     │  │Evaluation │  │ Navigation│                   │  │  │
 │  │  │  │ Tools     │  │ Tools     │  │ Tools     │                   │  │  │
 │  │  │  └───────────┘  └───────────┘  └───────────┘                   │  │  │
 │  │  └─────────────────────────────────────────────────────────────────┘  │  │
@@ -247,10 +247,6 @@ src/main/kotlin/com/github/user/jetbrainsdebuggermcpplugin/
 │   │
 │   ├── evaluation/                        # Expression evaluation tools
 │   │   └── EvaluateTool.kt                # evaluate
-│   │
-│   ├── watch/                             # Watch management tools
-│   │   ├── AddWatchTool.kt                # add_watch
-│   │   └── RemoveWatchTool.kt             # remove_watch
 │   │
 │   ├── navigation/                        # Source navigation tools
 │   │   └── GetSourceContextTool.kt        # get_source_context
@@ -610,10 +606,6 @@ class ToolRegistry {
         // Evaluation Tools
         register(EvaluateTool())
 
-        // Watch Tools
-        register(AddWatchTool())
-        register(RemoveWatchTool())
-
         // Navigation Tools
         register(GetSourceContextTool())
     }
@@ -830,7 +822,6 @@ data class DebugSessionStatus(
     val stackSummary: List<StackFrameInfo>,
     val totalStackDepth: Int,
     val variables: List<VariableInfo>,
-    val watches: List<WatchInfo>,
     val sourceContext: SourceContext?,
     val currentThread: ThreadInfo?,
     val threadCount: Int
@@ -856,16 +847,6 @@ data class VariableInfo(
     val type: String,
     val hasChildren: Boolean,
     val id: String? = null  // For expanding
-)
-
-// Watch
-@Serializable
-data class WatchInfo(
-    val id: String,
-    val expression: String,
-    val value: String?,
-    val type: String?,
-    val error: String?
 )
 
 // Breakpoint
@@ -1074,7 +1055,7 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
     override val name = "get_debug_session_status"
 
     override val description = """
-        Get comprehensive status of a debug session including variables, watches,
+        Get comprehensive status of a debug session including variables,
         stack summary, and source context. This is the primary tool for understanding
         the current debug state in a single call.
     """.trimIndent()
@@ -1131,7 +1112,6 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
             stackSummary = if (isPaused) getStackSummary(session, maxStackFrames) else emptyList(),
             totalStackDepth = if (isPaused) getStackDepth(session) else 0,
             variables = if (isPaused && includeVariables) getVariables(currentFrame) else emptyList(),
-            watches = if (isPaused) getWatches(session) else emptyList(),
             sourceContext = if (isPaused && includeSourceContext)
                 getSourceContext(project, currentFrame, sourceContextLines) else null,
             currentThread = getCurrentThreadInfo(session),
@@ -1200,11 +1180,6 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
                 override fun setMessage(message: String, icon: Icon?, attributes: SimpleTextAttributes, link: XDebuggerTreeNodeHyperlink?) {}
             })
         }
-    }
-
-    private fun getWatches(session: XDebugSession): List<WatchInfo> {
-        // Get watch expressions and their values
-        return emptyList()
     }
 
     private fun getSourceContext(
@@ -2115,11 +2090,9 @@ class SetBreakpointToolTest : BasePlatformTestCase() {
 | `expand_variable` | Variables | P1 |
 | `set_variable` | Variables | P2 |
 | `evaluate` | Evaluation | P0 |
-| `add_watch` | Watches | P2 |
-| `remove_watch` | Watches | P2 |
 | `get_source_context` | Navigation | P1 |
 
-**Total Tools: 26**
+**Total Tools: 24**
 
 ---
 
