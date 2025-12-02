@@ -103,7 +103,8 @@ data class ToolCallParams(
 @Serializable
 data class ToolCallResult(
     val content: List<ContentBlock>,
-    val isError: Boolean = false
+    val isError: Boolean = false,
+    val structuredContent: JsonObject? = null
 )
 
 @Serializable

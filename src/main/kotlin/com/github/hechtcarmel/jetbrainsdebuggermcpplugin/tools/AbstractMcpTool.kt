@@ -397,14 +397,20 @@ abstract class AbstractMcpTool : McpTool {
     /**
      * Creates a successful result with JSON-serialized data.
      *
+     * When the data serializes to a JSON object, it is also included as
+     * `structuredContent` for MCP tools that define an `outputSchema`.
+     *
      * @param data The data to serialize (must be @Serializable)
-     * @return A [ToolCallResult] with JSON content and `isError = false`
+     * @return A [ToolCallResult] with JSON content, optional structuredContent, and `isError = false`
      */
     protected inline fun <reified T> createJsonResult(data: T): ToolCallResult {
         val jsonText = json.encodeToString(data)
+        val jsonElement = json.parseToJsonElement(jsonText)
+        val structuredContent = jsonElement as? JsonObject
         return ToolCallResult(
             content = listOf(ContentBlock.Text(text = jsonText)),
-            isError = false
+            isError = false,
+            structuredContent = structuredContent
         )
     }
 }

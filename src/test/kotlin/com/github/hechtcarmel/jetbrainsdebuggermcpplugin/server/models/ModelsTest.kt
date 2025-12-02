@@ -376,4 +376,41 @@ class ModelsTest {
 
         assertTrue(encoded.contains("\"content\":[]"))
     }
+
+    @Test
+    fun `ToolCallResult with structuredContent serialization`() {
+        val structuredData = buildJsonObject {
+            put("sessionId", "12345")
+            put("frameIndex", 0)
+        }
+        val result = ToolCallResult(
+            content = listOf(ContentBlock.Text(text = """{"sessionId":"12345","frameIndex":0}""")),
+            isError = false,
+            structuredContent = structuredData
+        )
+
+        val encoded = json.encodeToString(result)
+
+        assertTrue(encoded.contains("\"structuredContent\""))
+        assertTrue(encoded.contains("\"sessionId\":\"12345\""))
+        assertTrue(encoded.contains("\"frameIndex\":0"))
+    }
+
+    @Test
+    fun `ToolCallResult without structuredContent omits field when null`() {
+        val jsonWithExplicitNulls = Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+            explicitNulls = false
+        }
+        val result = ToolCallResult(
+            content = listOf(ContentBlock.Text(text = "simple result")),
+            isError = false,
+            structuredContent = null
+        )
+
+        val encoded = jsonWithExplicitNulls.encodeToString(result)
+
+        assertFalse(encoded.contains("\"structuredContent\""))
+    }
 }

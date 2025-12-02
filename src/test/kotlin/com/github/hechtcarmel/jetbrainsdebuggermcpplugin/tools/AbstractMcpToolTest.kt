@@ -171,6 +171,8 @@ class AbstractMcpToolTest {
         assertTrue(content.text.contains("\"name\":\"testVar\""))
         assertTrue(content.text.contains("\"value\":\"42\""))
         assertTrue(content.text.contains("\"type\":\"Int\""))
+
+        assertNotNull(result.structuredContent)
     }
 
     @Test
@@ -186,6 +188,24 @@ class AbstractMcpToolTest {
         assertTrue(content.text.startsWith("["))
         assertTrue(content.text.contains("\"var1\""))
         assertTrue(content.text.contains("\"var2\""))
+        assertNull(result.structuredContent)
+    }
+
+    @Test
+    fun `createJsonResult populates structuredContent for object data`() {
+        val data = VariableInfo(
+            name = "testVar",
+            value = "42",
+            type = "Int",
+            hasChildren = false
+        )
+        val result = testTool.testCreateJsonResultVariableInfo(data)
+
+        assertFalse(result.isError)
+        assertNotNull(result.structuredContent)
+        assertEquals("testVar", result.structuredContent?.get("name")?.jsonPrimitive?.content)
+        assertEquals("42", result.structuredContent?.get("value")?.jsonPrimitive?.content)
+        assertEquals("Int", result.structuredContent?.get("type")?.jsonPrimitive?.content)
     }
 
     // Default annotations
