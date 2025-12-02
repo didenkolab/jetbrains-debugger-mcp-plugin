@@ -22,9 +22,8 @@ class RunToLineTool : AbstractMcpTool() {
     override val name = "run_to_line"
 
     override val description = """
-        Runs execution until it reaches the specified line in the specified file.
-        The debugger continues execution and pauses when the target line is reached.
-        Similar to setting a temporary breakpoint and resuming.
+        Continues execution until reaching a specific line in a file.
+        Use as a shortcut instead of setting a temporary breakpoint. Execution may stop earlier if another breakpoint is hit.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Run to Line")
@@ -42,7 +41,7 @@ class RunToLineTool : AbstractMcpTool() {
             }
             putJsonObject("line") {
                 put("type", "integer")
-                put("description", "Line number to run to (1-based)")
+                put("description", "Target line number (1-based). Execution will pause when this line is about to execute. The line must be reachable from the current execution path.")
                 put("minimum", 1)
             }
         }

@@ -16,6 +16,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
@@ -33,12 +34,34 @@ class GetVariablesTool : AbstractMcpTool() {
     override val name = "get_variables"
 
     override val description = """
-        Gets all variables visible in the current stack frame.
-        Returns variable names, values, types, and whether they have children (expandable).
-        Use expand_variable to see children of complex objects.
+        Returns all variables visible in the current (or specified) stack frame.
+        Use to inspect local variables, parameters, and accessible fields. For complex objects, use expand_variable to see their contents.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("Get Variables")
+
+    override val outputSchema: JsonObject = buildJsonObject {
+        put("type", "object")
+        putJsonObject("properties") {
+            putJsonObject("sessionId") { put("type", "string"); put("description", "Debug session ID") }
+            putJsonObject("frameIndex") { put("type", "integer"); put("description", "Stack frame index that variables were retrieved from") }
+            putJsonObject("variables") {
+                put("type", "array")
+                putJsonObject("items") {
+                    put("type", "object")
+                    putJsonObject("properties") {
+                        putJsonObject("name") { put("type", "string"); put("description", "Variable name") }
+                        putJsonObject("value") { put("type", "string"); put("description", "String representation of the value") }
+                        putJsonObject("type") { put("type", "string"); put("description", "Variable type name") }
+                        putJsonObject("hasChildren") { put("type", "boolean"); put("description", "True if this variable can be expanded with expand_variable") }
+                    }
+                    put("required", buildJsonArray { add(JsonPrimitive("name")); add(JsonPrimitive("value")); add(JsonPrimitive("type")); add(JsonPrimitive("hasChildren")) })
+                }
+                put("description", "List of variables visible in the stack frame")
+            }
+        }
+        put("required", buildJsonArray { add(JsonPrimitive("sessionId")); add(JsonPrimitive("frameIndex")); add(JsonPrimitive("variables")) })
+    }
 
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")

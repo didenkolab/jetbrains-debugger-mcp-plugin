@@ -43,13 +43,63 @@ class GetDebugSessionStatusTool : AbstractMcpTool() {
     override val name = "get_debug_session_status"
 
     override val description = """
-        Get comprehensive status of a debug session including state, location,
-        stack trace, variables, and source context.
-        This is the primary tool for understanding the current debug state.
-        Use after hitting a breakpoint or stepping to see what happened.
+        Returns the complete current state of a debug session: execution location, variables, stack trace, and surrounding source code.
+        This is the primary tool for understanding where execution stopped and why. Use after any execution control operation (resume, step, pause) to see the result.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("Get Debug Status")
+
+    override val outputSchema: JsonObject = buildJsonObject {
+        put("type", "object")
+        putJsonObject("properties") {
+            putJsonObject("sessionId") { put("type", "string"); put("description", "Unique identifier for the debug session") }
+            putJsonObject("name") { put("type", "string"); put("description", "Display name of the debug session") }
+            putJsonObject("state") { put("type", "string"); put("description", "Current state: 'running', 'paused', or 'stopped'") }
+            putJsonObject("pausedReason") { put("type", "string"); put("description", "Why execution paused: 'breakpoint', 'step', 'exception', or 'pause'") }
+            putJsonObject("currentLocation") {
+                put("type", "object")
+                putJsonObject("properties") {
+                    putJsonObject("file") { put("type", "string") }
+                    putJsonObject("line") { put("type", "integer") }
+                    putJsonObject("className") { put("type", "string") }
+                    putJsonObject("methodName") { put("type", "string") }
+                }
+                put("description", "Current execution location")
+            }
+            putJsonObject("variables") {
+                put("type", "array")
+                putJsonObject("items") {
+                    put("type", "object")
+                    putJsonObject("properties") {
+                        putJsonObject("name") { put("type", "string") }
+                        putJsonObject("value") { put("type", "string") }
+                        putJsonObject("type") { put("type", "string") }
+                        putJsonObject("hasChildren") { put("type", "boolean") }
+                    }
+                }
+                put("description", "Variables visible in current stack frame")
+            }
+            putJsonObject("stackSummary") {
+                put("type", "array")
+                putJsonObject("items") {
+                    put("type", "object")
+                    putJsonObject("properties") {
+                        putJsonObject("index") { put("type", "integer") }
+                        putJsonObject("file") { put("type", "string") }
+                        putJsonObject("line") { put("type", "integer") }
+                        putJsonObject("className") { put("type", "string") }
+                        putJsonObject("methodName") { put("type", "string") }
+                    }
+                }
+                put("description", "Stack trace summary")
+            }
+            putJsonObject("sourceContext") {
+                put("type", "object")
+                put("description", "Source code around the current execution point")
+            }
+        }
+        put("required", buildJsonArray { add(kotlinx.serialization.json.JsonPrimitive("sessionId")); add(kotlinx.serialization.json.JsonPrimitive("name")); add(kotlinx.serialization.json.JsonPrimitive("state")) })
+    }
 
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")

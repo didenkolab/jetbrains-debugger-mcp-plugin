@@ -36,9 +36,8 @@ class SetBreakpointTool : AbstractMcpTool() {
     override val name = "set_breakpoint"
 
     override val description = """
-        Sets a line breakpoint at the specified file and line.
-        Supports conditions, log messages (tracepoints), and suspend policies.
-        Use {expr} in log_message to evaluate expressions.
+        Sets a breakpoint at a specific file and line number, optionally with conditions or logging.
+        Use to pause execution at specific code locations. Execution will stop when the breakpoint is hit (unless using log-only mode with suspend_policy='none').
     """.trimIndent()
 
     override val annotations = ToolAnnotations.idempotentMutable("Set Breakpoint")
@@ -59,11 +58,11 @@ class SetBreakpointTool : AbstractMcpTool() {
             }
             putJsonObject("condition") {
                 put("type", "string")
-                put("description", "Conditional expression (breakpoint only hits when true)")
+                put("description", "Boolean expression that must evaluate to true for the breakpoint to pause execution. Uses the target language syntax (e.g., 'count > 10', 'name.equals(\"test\")'). Evaluated each time the line is reached.")
             }
             putJsonObject("log_message") {
                 put("type", "string")
-                put("description", "Log message (tracepoint). Use {expr} for expression evaluation.")
+                put("description", "Message to log when breakpoint is hit (tracepoint). Use {expression} syntax to include evaluated values (e.g., 'x={x}, y={y}'). When set with suspend_policy='none', creates a non-stopping logpoint.")
             }
             putJsonObject("suspend_policy") {
                 put("type", "string")
@@ -72,7 +71,7 @@ class SetBreakpointTool : AbstractMcpTool() {
                     add(JsonPrimitive("thread"))
                     add(JsonPrimitive("none"))
                 }
-                put("description", "Thread suspend policy")
+                put("description", "Thread suspend policy: 'all' suspends all threads (default), 'thread' suspends only the current thread, 'none' logs without stopping (use with log_message for logpoints)")
                 put("default", "all")
             }
             putJsonObject("enabled") {

@@ -21,10 +21,8 @@ class StepIntoTool : AbstractMcpTool() {
     override val name = "step_into"
 
     override val description = """
-        Steps into the function call on the current line.
-        If the current line has a function call, execution enters that function.
-        Use to debug into function implementations.
-        After stepping, use get_debug_session_status to see the new state.
+        Steps into the function call on the current line, entering the function body.
+        Use when you need to debug inside a function. If no function call exists on the current line, behaves like step_over.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Step Into")

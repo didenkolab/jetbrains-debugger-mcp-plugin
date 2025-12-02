@@ -23,9 +23,8 @@ class GetSourceContextTool : AbstractMcpTool() {
     override val name = "get_source_context"
 
     override val description = """
-        Gets source code context around a specific location or the current debug position.
-        Returns lines of source code with line numbers and breakpoint markers.
-        Use to see the code around where execution is paused or at any file location.
+        Returns source code lines around a specific location or the current execution point.
+        Use to see the code context without switching to the IDE. Shows line numbers and indicates which lines have breakpoints.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("Get Source Context")
@@ -48,13 +47,13 @@ class GetSourceContextTool : AbstractMcpTool() {
             }
             putJsonObject("lines_before") {
                 put("type", "integer")
-                put("description", "Number of lines to include before the target line")
+                put("description", "Number of source lines to include before the target line. Use larger values when you need more context to understand the code flow.")
                 put("default", 5)
                 put("minimum", 0)
             }
             putJsonObject("lines_after") {
                 put("type", "integer")
-                put("description", "Number of lines to include after the target line")
+                put("description", "Number of source lines to include after the target line. Use larger values to see more of the upcoming code.")
                 put("default", 5)
                 put("minimum", 0)
             }

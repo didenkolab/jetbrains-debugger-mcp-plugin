@@ -1,6 +1,6 @@
 # Debugger MCP Server - Tool Reference
 
-This document provides detailed documentation for all 23 MCP tools available in the Debugger MCP Server plugin.
+This document provides detailed documentation for all 23 MCP tools available in the JetBrains Debugger MCP Server plugin.
 
 ## Tool Overview
 
@@ -11,7 +11,7 @@ Tools are organized into categories based on functionality:
 | Tool | Description |
 |------|-------------|
 | `list_run_configurations` | List all available run configurations |
-| `run_configuration` | Execute a run configuration |
+| `execute_run_configuration` | Execute a run configuration in run or debug mode |
 
 ### Debug Session Tools (4)
 
@@ -34,8 +34,8 @@ Tools are organized into categories based on functionality:
 
 | Tool | Description |
 |------|-------------|
-| `resume` | Resume execution |
-| `pause` | Pause execution |
+| `resume_execution` | Resume execution from paused state |
+| `pause_execution` | Pause execution at current point |
 | `step_over` | Step over to next line |
 | `step_into` | Step into method call |
 | `step_out` | Step out of current method |
@@ -67,7 +67,7 @@ Tools are organized into categories based on functionality:
 
 | Tool | Description |
 |------|-------------|
-| `evaluate` | Evaluate expression |
+| `evaluate_expression` | Evaluate expression in debug context |
 
 ---
 
@@ -76,7 +76,7 @@ Tools are organized into categories based on functionality:
 - [Common Parameters](#common-parameters)
 - [Run Configuration Tools](#run-configuration-tools)
   - [list_run_configurations](#list_run_configurations)
-  - [run_configuration](#run_configuration)
+  - [execute_run_configuration](#execute_run_configuration)
 - [Debug Session Tools](#debug-session-tools)
   - [list_debug_sessions](#list_debug_sessions)
   - [start_debug_session](#start_debug_session)
@@ -87,8 +87,8 @@ Tools are organized into categories based on functionality:
   - [set_breakpoint](#set_breakpoint)
   - [remove_breakpoint](#remove_breakpoint)
 - [Execution Control Tools](#execution-control-tools)
-  - [resume](#resume)
-  - [pause](#pause)
+  - [resume_execution](#resume_execution)
+  - [pause_execution](#pause_execution)
   - [step_over](#step_over)
   - [step_into](#step_into)
   - [step_out](#step_out)
@@ -104,7 +104,7 @@ Tools are organized into categories based on functionality:
 - [Navigation Tools](#navigation-tools)
   - [get_source_context](#get_source_context)
 - [Evaluation Tools](#evaluation-tools)
-  - [evaluate](#evaluate)
+  - [evaluate_expression](#evaluate_expression)
 - [Error Handling](#error-handling)
 
 ---
@@ -182,20 +182,21 @@ Lists all run configurations available in the project.
 
 ---
 
-### run_configuration
+### execute_run_configuration
 
-Executes a run configuration in run or debug mode.
+Executes a run configuration in either 'run' or 'debug' mode.
 
 **Use when:**
 - Starting the application in debug mode
 - Running tests to hit breakpoints
+- Running without debugging when you don't need breakpoints
 
 **Parameters:**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `name` | string | Yes | Name of the run configuration |
-| `debug` | boolean | No | Run in debug mode (default: true) |
+| `mode` | string | No | `debug` (default) or `run` |
 | `project_path` | string | No | Project path |
 
 **Example Request:**
@@ -204,10 +205,10 @@ Executes a run configuration in run or debug mode.
 {
   "method": "tools/call",
   "params": {
-    "name": "run_configuration",
+    "name": "execute_run_configuration",
     "arguments": {
       "name": "UserServiceTest",
-      "debug": true
+      "mode": "debug"
     }
   }
 }
@@ -670,13 +671,14 @@ Removes a breakpoint by its ID. Use `list_breakpoints` to get breakpoint IDs.
 
 ## Execution Control Tools
 
-### resume
+### resume_execution
 
-Resumes execution of a paused debug session.
+Resumes program execution from a paused state.
 
 **Use when:**
 - Continuing after hitting a breakpoint
 - Resuming after inspecting state
+- Letting execution continue to the next breakpoint
 
 **Parameters:**
 
@@ -691,7 +693,7 @@ Resumes execution of a paused debug session.
 {
   "method": "tools/call",
   "params": {
-    "name": "resume",
+    "name": "resume_execution",
     "arguments": {}
   }
 }
@@ -709,13 +711,14 @@ Resumes execution of a paused debug session.
 
 ---
 
-### pause
+### pause_execution
 
-Pauses a running debug session.
+Pauses a running debug session at its current execution point.
 
 **Use when:**
 - Stopping execution to inspect state
-- Pausing to set new breakpoints
+- Pausing to examine what the program is doing
+- Breaking into a running program
 
 **Parameters:**
 
@@ -730,7 +733,7 @@ Pauses a running debug session.
 {
   "method": "tools/call",
   "params": {
-    "name": "pause",
+    "name": "pause_execution",
     "arguments": {}
   }
 }
@@ -1330,21 +1333,22 @@ Gets source code around the current execution point or specified location.
 
 ## Evaluation Tools
 
-### evaluate
+### evaluate_expression
 
-Evaluates an expression in the context of the current stack frame.
+Evaluates an arbitrary expression in the current debug context and returns the result.
 
 **Use when:**
 - Inspecting computed values
 - Calling methods to test behavior
 - Checking conditions
 - Running code snippets
+- Computing complex expressions
 
 **Parameters:**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `expression` | string | Yes | Expression to evaluate |
+| `expression` | string | Yes | Expression to evaluate (e.g., `x`, `list.size()`, `a + b * 2`) |
 | `session_id` | string | No | Session ID |
 | `frame_index` | integer | No | Stack frame context (default: 0) |
 | `project_path` | string | No | Project path |
@@ -1355,7 +1359,7 @@ Evaluates an expression in the context of the current stack frame.
 {
   "method": "tools/call",
   "params": {
-    "name": "evaluate",
+    "name": "evaluate_expression",
     "arguments": {
       "expression": "userId.length()"
     }
@@ -1369,7 +1373,7 @@ Evaluates an expression in the context of the current stack frame.
 {
   "method": "tools/call",
   "params": {
-    "name": "evaluate",
+    "name": "evaluate_expression",
     "arguments": {
       "expression": "userRepository.count()"
     }
@@ -1464,10 +1468,10 @@ If `state` is not `"paused"`, wait for a breakpoint to be hit or call `pause`.
 ### Typical Debugging Flow
 
 1. **Set breakpoints** - Use `set_breakpoint` at points of interest
-2. **Start debugging** - Use `start_debug_session` or `run_configuration`
+2. **Start debugging** - Use `start_debug_session` or `execute_run_configuration`
 3. **Wait for pause** - Session pauses at breakpoint
 4. **Inspect state** - Use `get_debug_session_status` for comprehensive view
-5. **Evaluate/modify** - Use `evaluate`, `get_variables`, `set_variable`
-6. **Navigate** - Use `step_over`, `step_into`, `step_out`, or `resume`
+5. **Evaluate/modify** - Use `evaluate_expression`, `get_variables`, `set_variable`
+6. **Navigate** - Use `step_over`, `step_into`, `step_out`, or `resume_execution`
 7. **Repeat** - Continue inspecting and stepping until issue found
 8. **Clean up** - Use `stop_debug_session` and `remove_breakpoint`

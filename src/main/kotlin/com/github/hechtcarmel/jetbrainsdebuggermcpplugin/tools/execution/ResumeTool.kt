@@ -18,12 +18,11 @@ import kotlinx.serialization.json.putJsonObject
  */
 class ResumeTool : AbstractMcpTool() {
 
-    override val name = "resume"
+    override val name = "resume_execution"
 
     override val description = """
-        Resumes execution of a paused debug session.
-        The program continues until it hits another breakpoint or completes.
-        Use after inspecting variables or stepping through code.
+        Resumes program execution from a paused state.
+        Execution continues until the next breakpoint, exception, or program completion. Use get_debug_session_status afterward to see where execution stopped.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Resume Execution")

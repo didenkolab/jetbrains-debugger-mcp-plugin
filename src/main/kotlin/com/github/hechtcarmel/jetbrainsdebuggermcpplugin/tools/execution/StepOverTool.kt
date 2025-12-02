@@ -21,9 +21,8 @@ class StepOverTool : AbstractMcpTool() {
     override val name = "step_over"
 
     override val description = """
-        Steps over the current line, executing it without entering any function calls.
-        Use to execute code line by line at the current level.
-        After stepping, use get_debug_session_status to see the new state.
+        Executes the current line and stops at the next line, without entering function calls.
+        Use for line-by-line debugging when you don't need to inspect function internals. Check get_debug_session_status for the new location.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Step Over")

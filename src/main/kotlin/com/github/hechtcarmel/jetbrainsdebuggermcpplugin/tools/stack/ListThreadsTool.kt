@@ -23,9 +23,8 @@ class ListThreadsTool : AbstractMcpTool() {
     override val name = "list_threads"
 
     override val description = """
-        Lists all threads in the debugged process.
-        Returns thread IDs, names, states, and which thread is current.
-        Use to understand the multi-threaded state of the application.
+        Lists all threads in the debugged process with their states.
+        Use in multi-threaded applications to see which threads exist and which is currently selected.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("List Threads")

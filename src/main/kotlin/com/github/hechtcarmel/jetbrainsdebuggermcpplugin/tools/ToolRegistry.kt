@@ -46,6 +46,7 @@ class ToolRegistry {
             name = tool.name,
             description = tool.description,
             inputSchema = tool.inputSchema,
+            outputSchema = tool.outputSchema,
             annotations = tool.annotations
         )
     }

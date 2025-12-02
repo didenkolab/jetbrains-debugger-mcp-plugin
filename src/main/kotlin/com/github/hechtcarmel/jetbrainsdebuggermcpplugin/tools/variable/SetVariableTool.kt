@@ -31,9 +31,8 @@ class SetVariableTool : AbstractMcpTool() {
     override val name = "set_variable"
 
     override val description = """
-        Modifies the value of a variable in the current debug context.
-        Can set primitive values, strings, and some object references.
-        Use get_variables first to identify available variables.
+        Changes the value of a variable during debugging.
+        Use to test different values or fix incorrect state. Supports primitives, strings, and simple expressions. This modifies the running program's state.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Set Variable", destructive = true)
@@ -51,7 +50,7 @@ class SetVariableTool : AbstractMcpTool() {
             }
             putJsonObject("new_value") {
                 put("type", "string")
-                put("description", "New value as a string expression (e.g., '42', '\"hello\"', 'true')")
+                put("description", "New value as a string expression. For primitives: '42', '3.14', 'true'. For strings: '\"hello\"' (with quotes). For null: 'null'. Can also be an expression that evaluates to the target type.")
             }
         }
         putJsonArray("required") {

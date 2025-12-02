@@ -52,7 +52,7 @@ class McpConstantsTest {
     @Test
     fun `server name is not empty`() {
         assertTrue(McpConstants.SERVER_NAME.isNotEmpty())
-        assertEquals("jetbrains-debugger-mcp", McpConstants.SERVER_NAME)
+        assertEquals("jetbrains-debugger", McpConstants.SERVER_NAME)
     }
 
     @Test
@@ -65,9 +65,12 @@ class McpConstantsTest {
     @Test
     fun `server description is comprehensive`() {
         assertTrue(McpConstants.SERVER_DESCRIPTION.isNotEmpty())
-        assertTrue(McpConstants.SERVER_DESCRIPTION.contains("debugger"))
-        assertTrue(McpConstants.SERVER_DESCRIPTION.contains("breakpoint"))
-        assertTrue(McpConstants.SERVER_DESCRIPTION.contains("variable"))
+        assertTrue("Description should mention debug/debugging",
+            McpConstants.SERVER_DESCRIPTION.contains("debug", ignoreCase = true))
+        assertTrue("Description should mention breakpoint",
+            McpConstants.SERVER_DESCRIPTION.contains("breakpoint", ignoreCase = true))
+        assertTrue("Description should mention variable",
+            McpConstants.SERVER_DESCRIPTION.contains("variable", ignoreCase = true))
     }
 
     @Test

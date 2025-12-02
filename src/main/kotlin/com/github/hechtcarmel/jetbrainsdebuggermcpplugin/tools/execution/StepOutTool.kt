@@ -18,9 +18,8 @@ class StepOutTool : AbstractMcpTool() {
     override val name = "step_out"
 
     override val description = """
-        Steps out of the current method, returning to the caller.
-        The debugger continues execution until the current method returns.
-        Use after stepping into a method to quickly return to the calling code.
+        Continues execution until the current function returns, then pauses at the caller.
+        Use to exit a function you've stepped into without stepping through every remaining line.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Step Out")

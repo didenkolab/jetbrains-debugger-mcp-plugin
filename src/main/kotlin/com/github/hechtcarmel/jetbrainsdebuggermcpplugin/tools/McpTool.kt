@@ -9,6 +9,8 @@ interface McpTool {
     val name: String
     val description: String
     val inputSchema: JsonObject
+    val outputSchema: JsonObject?
+        get() = null
     val annotations: ToolAnnotations
 
     suspend fun execute(project: Project, arguments: JsonObject): ToolCallResult

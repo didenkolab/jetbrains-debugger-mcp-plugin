@@ -28,12 +28,11 @@ import kotlin.coroutines.resume
  */
 class EvaluateTool : AbstractMcpTool() {
 
-    override val name = "evaluate"
+    override val name = "evaluate_expression"
 
     override val description = """
-        Evaluates an expression in the context of the current stack frame.
-        Returns the result value, type, and whether it has children (expandable).
-        Use to inspect values, call methods, or modify state during debugging.
+        Evaluates an arbitrary expression in the current debug context and returns the result.
+        Use to compute values, call methods, or inspect complex expressions. Can modify state if the expression has side effects.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Evaluate Expression")
@@ -47,7 +46,7 @@ class EvaluateTool : AbstractMcpTool() {
             put(sessionName, sessionSchema)
             putJsonObject("expression") {
                 put("type", "string")
-                put("description", "Expression to evaluate (e.g., variable name, method call, arithmetic)")
+                put("description", "Expression to evaluate in the current context. Can be a variable name, method call, arithmetic, or complex expression. Examples: 'x', 'list.size()', 'a + b * 2', 'String.format(\"%d\", count)'")
             }
             putJsonObject("frame_index") {
                 put("type", "integer")

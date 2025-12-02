@@ -26,8 +26,7 @@ class RemoveBreakpointTool : AbstractMcpTool() {
 
     override val description = """
         Removes a breakpoint by its ID.
-        Use list_breakpoints to get breakpoint IDs.
-        Returns confirmation of removal.
+        Use list_breakpoints first to find the breakpoint ID. This operation is idempotent.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.idempotentMutable("Remove Breakpoint", destructive = true)

@@ -22,9 +22,8 @@ class ListBreakpointsTool : AbstractMcpTool() {
     override val name = "list_breakpoints"
 
     override val description = """
-        Lists all breakpoints in the project including line breakpoints,
-        exception breakpoints, and their properties (conditions, log messages, etc.).
-        Use to see what breakpoints are set before debugging.
+        Lists all breakpoints in the project with their locations, conditions, and states.
+        Use to discover breakpoint IDs for removal, or to verify breakpoints are configured correctly before debugging.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("List Breakpoints")

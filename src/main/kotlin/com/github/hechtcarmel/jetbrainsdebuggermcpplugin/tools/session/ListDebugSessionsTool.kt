@@ -21,9 +21,8 @@ class ListDebugSessionsTool : AbstractMcpTool() {
     override val name = "list_debug_sessions"
 
     override val description = """
-        Lists all active debug sessions in the project.
-        Returns session IDs, names, states, and which session is current.
-        Use this to get session IDs for other debugging operations.
+        Lists all active debug sessions with their IDs, names, and states.
+        Use to discover session IDs when multiple debug sessions are running, or to check which session is current.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("List Debug Sessions")

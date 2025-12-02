@@ -9,6 +9,7 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.util.StackFrameUt
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XStackFrame
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
@@ -24,12 +25,37 @@ class GetStackTraceTool : AbstractMcpTool() {
     override val name = "get_stack_trace"
 
     override val description = """
-        Gets the call stack (stack trace) for the current thread.
-        Returns stack frames with file, line, class, and method information.
-        Use to understand the call path that led to the current execution point.
+        Returns the call stack showing how execution reached the current point.
+        Use to understand the sequence of function calls. Each frame includes file, line, class, and method information.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("Get Stack Trace")
+
+    override val outputSchema: JsonObject = buildJsonObject {
+        put("type", "object")
+        putJsonObject("properties") {
+            putJsonObject("sessionId") { put("type", "string"); put("description", "Debug session ID") }
+            putJsonObject("threadId") { put("type", "string"); put("description", "Thread ID or name") }
+            putJsonObject("frames") {
+                put("type", "array")
+                putJsonObject("items") {
+                    put("type", "object")
+                    putJsonObject("properties") {
+                        putJsonObject("index") { put("type", "integer"); put("description", "Frame index (0 = current/topmost)") }
+                        putJsonObject("file") { put("type", "string"); put("description", "Absolute path to source file") }
+                        putJsonObject("line") { put("type", "integer"); put("description", "Line number (1-based)") }
+                        putJsonObject("className") { put("type", "string"); put("description", "Fully qualified class name") }
+                        putJsonObject("methodName") { put("type", "string"); put("description", "Method or function name") }
+                        putJsonObject("isCurrent") { put("type", "boolean"); put("description", "True if this is the current frame") }
+                        putJsonObject("isLibrary") { put("type", "boolean"); put("description", "True if this frame is in library code") }
+                    }
+                }
+                put("description", "Stack frames from current (0) to oldest")
+            }
+            putJsonObject("totalFrames") { put("type", "integer"); put("description", "Total number of frames returned") }
+        }
+        put("required", buildJsonArray { add(JsonPrimitive("sessionId")); add(JsonPrimitive("frames")); add(JsonPrimitive("totalFrames")) })
+    }
 
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")

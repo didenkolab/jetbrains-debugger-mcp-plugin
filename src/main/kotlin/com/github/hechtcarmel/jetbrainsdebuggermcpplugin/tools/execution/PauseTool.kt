@@ -18,12 +18,11 @@ import kotlinx.serialization.json.putJsonObject
  */
 class PauseTool : AbstractMcpTool() {
 
-    override val name = "pause"
+    override val name = "pause_execution"
 
     override val description = """
-        Pauses execution of a running debug session.
-        Use to break into the debugger at the current execution point.
-        After pausing, you can inspect variables and step through code.
+        Pauses a running debug session at its current execution point.
+        Use when you need to inspect state during execution. After pausing, use get_debug_session_status to see the current location.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.idempotentMutable("Pause Execution")

@@ -20,9 +20,8 @@ class StopDebugSessionTool : AbstractMcpTool() {
     override val name = "stop_debug_session"
 
     override val description = """
-        Stops an active debug session.
-        If no session_id is provided, stops the current session.
-        Use list_debug_sessions to see available sessions and their IDs.
+        Terminates a debug session, stopping the debugged process.
+        Use to end a debugging session. This is a destructive operation that cannot be undone.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Stop Debug Session", destructive = true)

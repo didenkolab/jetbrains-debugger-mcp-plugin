@@ -28,15 +28,14 @@ import kotlinx.serialization.json.putJsonObject
  */
 class RunConfigurationTool : AbstractMcpTool() {
 
-    override val name = "run_configuration"
+    override val name = "execute_run_configuration"
 
     override val description = """
-        Runs or debugs a run configuration by name.
-        Use mode='debug' to start a debug session, or mode='run' to run without debugging.
-        Use list_run_configurations first to see available configurations.
+        Executes a run configuration in either 'run' or 'debug' mode.
+        Use when you need to run or debug a specific configuration. For debugging with full session tracking, prefer start_debug_session instead.
     """.trimIndent()
 
-    override val annotations = ToolAnnotations.mutable("Run/Debug Configuration")
+    override val annotations = ToolAnnotations.mutable("Execute Configuration")
 
     override val inputSchema: JsonObject = buildJsonObject {
         put("type", "object")

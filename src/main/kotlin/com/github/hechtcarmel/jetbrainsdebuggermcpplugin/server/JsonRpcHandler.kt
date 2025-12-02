@@ -18,6 +18,7 @@ class JsonRpcHandler(
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
+        explicitNulls = false  // Don't serialize null values - important for MCP compatibility
         prettyPrint = false
     }
 

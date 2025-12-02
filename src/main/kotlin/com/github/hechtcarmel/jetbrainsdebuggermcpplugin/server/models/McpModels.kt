@@ -35,6 +35,7 @@ data class ToolDefinition(
     val name: String,
     val description: String,
     val inputSchema: JsonObject,
+    val outputSchema: JsonObject? = null,
     val annotations: ToolAnnotations? = null
 )
 

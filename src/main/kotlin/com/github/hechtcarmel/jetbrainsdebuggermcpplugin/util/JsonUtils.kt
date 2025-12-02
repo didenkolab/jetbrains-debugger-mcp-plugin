@@ -13,6 +13,7 @@ import kotlinx.serialization.json.put
 val mcpJson = Json {
     ignoreUnknownKeys = true
     encodeDefaults = false
+    explicitNulls = false
     prettyPrint = false
     isLenient = true
 }
@@ -20,6 +21,7 @@ val mcpJson = Json {
 val mcpJsonPretty = Json {
     ignoreUnknownKeys = true
     encodeDefaults = false
+    explicitNulls = false
     prettyPrint = true
     isLenient = true
 }

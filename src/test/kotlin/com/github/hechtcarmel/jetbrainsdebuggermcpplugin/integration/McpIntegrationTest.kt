@@ -156,7 +156,7 @@ class McpIntegrationTest : BasePlatformTestCase() {
         val arguments = buildJsonObject {
             put("expression", "1 + 1")
         }
-        val request = buildToolCallRequest("evaluate", arguments)
+        val request = buildToolCallRequest("evaluate_expression", arguments)
         val response = handler.handleRequest(encodeRequest(request))
         val result = parseResponse(response)
 

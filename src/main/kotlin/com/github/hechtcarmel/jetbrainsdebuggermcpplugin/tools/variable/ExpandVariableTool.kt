@@ -30,9 +30,8 @@ class ExpandVariableTool : AbstractMcpTool() {
     override val name = "expand_variable"
 
     override val description = """
-        Expands a variable to show its children (fields, elements, etc.).
-        Use the variable_path from get_variables or a previous expand_variable call.
-        Only works on variables where hasChildren is true.
+        Shows the fields/elements of a complex variable (object, array, collection).
+        Use after get_variables when a variable has hasChildren=true. Specify the path using dot notation (e.g., 'user.address.city').
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("Expand Variable")

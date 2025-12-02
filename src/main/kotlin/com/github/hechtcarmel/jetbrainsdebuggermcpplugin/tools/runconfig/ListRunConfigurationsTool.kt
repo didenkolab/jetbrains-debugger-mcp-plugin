@@ -26,9 +26,8 @@ class ListRunConfigurationsTool : AbstractMcpTool() {
     override val name = "list_run_configurations"
 
     override val description = """
-        Lists all run/debug configurations available in the project.
-        Use this to discover configuration names before starting a debug session.
-        Returns configuration name, type, and whether it can be run or debugged.
+        Lists all available run/debug configurations in the project.
+        Use this first to discover which configurations can be debugged before calling start_debug_session.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.readOnly("List Run Configurations")

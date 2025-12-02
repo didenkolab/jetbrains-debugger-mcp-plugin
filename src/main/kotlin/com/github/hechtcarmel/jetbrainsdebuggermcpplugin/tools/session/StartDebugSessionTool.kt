@@ -32,9 +32,8 @@ class StartDebugSessionTool : AbstractMcpTool() {
     override val name = "start_debug_session"
 
     override val description = """
-        Starts a new debug session using the specified run configuration.
-        Use list_run_configurations to see available configurations.
-        Returns the new session ID and status.
+        Starts a new debug session for a specified run configuration and returns the session ID.
+        Use this to begin debugging. Call list_run_configurations first to discover available configurations.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Start Debug Session")

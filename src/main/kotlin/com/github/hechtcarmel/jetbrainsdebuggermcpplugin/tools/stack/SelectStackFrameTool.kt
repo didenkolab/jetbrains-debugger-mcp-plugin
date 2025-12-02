@@ -22,9 +22,8 @@ class SelectStackFrameTool : AbstractMcpTool() {
     override val name = "select_stack_frame"
 
     override val description = """
-        Selects a specific stack frame as the current context for variable inspection and evaluation.
-        Use get_stack_trace first to see available frames and their indices.
-        Frame index 0 is the current (topmost) frame.
+        Changes the current stack frame context for variable inspection and expression evaluation.
+        Use to inspect variables in a caller's scope. Frame 0 is the current function; higher indices are callers.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.idempotentMutable("Select Stack Frame")

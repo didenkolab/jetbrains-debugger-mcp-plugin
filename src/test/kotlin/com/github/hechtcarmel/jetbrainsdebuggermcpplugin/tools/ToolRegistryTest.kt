@@ -123,10 +123,10 @@ class ToolRegistryTest {
         assertNotNull("list_run_configurations should be registered", registry.getTool("list_run_configurations"))
         assertNotNull("start_debug_session should be registered", registry.getTool("start_debug_session"))
         assertNotNull("set_breakpoint should be registered", registry.getTool("set_breakpoint"))
-        assertNotNull("resume should be registered", registry.getTool("resume"))
+        assertNotNull("resume_execution should be registered", registry.getTool("resume_execution"))
         assertNotNull("step_over should be registered", registry.getTool("step_over"))
         assertNotNull("get_variables should be registered", registry.getTool("get_variables"))
-        assertNotNull("evaluate should be registered", registry.getTool("evaluate"))
+        assertNotNull("evaluate_expression should be registered", registry.getTool("evaluate_expression"))
     }
 
     @Test
@@ -166,7 +166,7 @@ class ToolRegistryTest {
 
         // Run Configuration Tools (2)
         assertNotNull(registry.getTool("list_run_configurations"))
-        assertNotNull(registry.getTool("run_configuration"))
+        assertNotNull(registry.getTool("execute_run_configuration"))
 
         // Debug Session Tools (4)
         assertNotNull(registry.getTool("list_debug_sessions"))
@@ -180,8 +180,8 @@ class ToolRegistryTest {
         assertNotNull(registry.getTool("remove_breakpoint"))
 
         // Execution Control Tools (6)
-        assertNotNull(registry.getTool("resume"))
-        assertNotNull(registry.getTool("pause"))
+        assertNotNull(registry.getTool("resume_execution"))
+        assertNotNull(registry.getTool("pause_execution"))
         assertNotNull(registry.getTool("step_over"))
         assertNotNull(registry.getTool("step_into"))
         assertNotNull(registry.getTool("step_out"))
@@ -201,7 +201,7 @@ class ToolRegistryTest {
         assertNotNull(registry.getTool("get_source_context"))
 
         // Evaluation Tools (1)
-        assertNotNull(registry.getTool("evaluate"))
+        assertNotNull(registry.getTool("evaluate_expression"))
     }
 
     @Test
