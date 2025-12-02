@@ -629,7 +629,7 @@ Sets a line breakpoint at the specified location.
 
 ### remove_breakpoint
 
-Removes a breakpoint by ID or location.
+Removes a breakpoint by its ID. Use `list_breakpoints` to get breakpoint IDs.
 
 **Use when:**
 - Removing a specific breakpoint
@@ -639,14 +639,10 @@ Removes a breakpoint by ID or location.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `breakpoint_id` | string | No* | ID of breakpoint to remove |
-| `file_path` | string | No* | File path (use with line) |
-| `line` | integer | No* | Line number (use with file_path) |
+| `breakpoint_id` | string | Yes | ID of breakpoint to remove (from `list_breakpoints`) |
 | `project_path` | string | No | Project path |
 
-*Either `breakpoint_id` OR `file_path`+`line` must be provided.
-
-**Example Request (by ID):**
+**Example Request:**
 
 ```json
 {
@@ -660,27 +656,13 @@ Removes a breakpoint by ID or location.
 }
 ```
 
-**Example Request (by location):**
-
-```json
-{
-  "method": "tools/call",
-  "params": {
-    "name": "remove_breakpoint",
-    "arguments": {
-      "file_path": "/Users/dev/project/src/UserService.java",
-      "line": 42
-    }
-  }
-}
-```
-
 **Example Response:**
 
 ```json
 {
   "status": "removed",
-  "message": "Breakpoint removed"
+  "breakpointId": "bp_123",
+  "message": "Breakpoint removed successfully"
 }
 ```
 
