@@ -139,16 +139,16 @@ class SseSession(
         }
 
         return try {
-            // Format: event: <type>\ndata: <data>\n\n
-            val sseEvent = "event: $eventType\ndata: $data\n\n"
+            // SSE spec: each line of data must be prefixed with "data: "
+            // This handles multiline data correctly
+            val dataLines = data.lines().joinToString("\n") { "data: $it" }
+            val sseEvent = "event: $eventType\n$dataLines\n\n"
             val buffer = Unpooled.copiedBuffer(sseEvent, StandardCharsets.UTF_8)
 
             // Send on the event loop thread to ensure thread safety
+            // Netty handles inactive channels gracefully (fails write, releases buffer)
             context.channel().eventLoop().execute {
-                if (context.channel().isActive) {
-                    context.writeAndFlush(DefaultHttpContent(buffer))
-                    LOG.debug("Sent SSE event to session $sessionId: type=$eventType")
-                }
+                context.writeAndFlush(DefaultHttpContent(buffer))
             }
             true
         } catch (e: Exception) {
