@@ -72,7 +72,7 @@ class McpRequestHandler : HttpRequestHandler() {
                 true
             }
             // POST /debugger-mcp?sessionId=xxx → JSON-RPC via SSE
-            request.method() == HttpMethod.POST && path == MCP_PATH -> {
+            request.method() == HttpMethod.POST && (path == MCP_PATH || path == SSE_PATH) -> {
                 handlePostRequest(urlDecoder, request, context)
                 true
             }
