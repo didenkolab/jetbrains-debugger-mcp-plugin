@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-12-07
+
+### Fixed
+- **Rust/Cargo debug support** - Fixed debug session startup for Rust projects in RustRover. Changed from `ExecutionEnvironmentBuilder.restartRunProfile()` to `ProgramRunnerUtil.executeConfiguration()` which properly handles toolchain context resolution.
+
+### Changed
+- **Improved tool descriptions** - Added language-specific limitation notes to `set_variable` and `evaluate_expression` tools. Native debuggers (LLDB/GDB) used for Rust, C++, and Go have limited support for modifying complex types and calling methods during debugging.
+
 ## [1.2.2] - 2025-12-07
 
 ### Changed

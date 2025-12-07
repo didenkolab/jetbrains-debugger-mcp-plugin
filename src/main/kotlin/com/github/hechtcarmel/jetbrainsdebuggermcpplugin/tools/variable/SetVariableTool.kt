@@ -33,6 +33,8 @@ class SetVariableTool : AbstractMcpTool() {
     override val description = """
         Changes the value of a variable during debugging.
         Use to test different values or fix incorrect state. Supports primitives, strings, and simple expressions. This modifies the running program's state.
+
+        **Language limitations:** Native debuggers (LLDB/GDB) used for Rust, C++, and Go have limited support for modifying complex types like strings, collections, or heap-allocated values. Works best in languages with full debug support (Java, Kotlin, Python, JavaScript).
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Set Variable", destructive = true)

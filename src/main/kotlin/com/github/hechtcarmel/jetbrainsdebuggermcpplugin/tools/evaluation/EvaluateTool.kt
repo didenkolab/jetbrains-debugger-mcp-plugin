@@ -33,6 +33,8 @@ class EvaluateTool : AbstractMcpTool() {
     override val description = """
         Evaluates an arbitrary expression in the current debug context and returns the result.
         Use to compute values, call methods, or inspect complex expressions. Can modify state if the expression has side effects.
+
+        **Language limitations:** Native debuggers (LLDB/GDB) used for Rust, C++, and Go have limited expression evaluation. Method calls (e.g., `s.len()`, `vec.size()`) may not work. Variable inspection works well. Full expression support is available in Java, Kotlin, Python, and JavaScript.
     """.trimIndent()
 
     override val annotations = ToolAnnotations.mutable("Evaluate Expression")
