@@ -152,9 +152,32 @@ Tools return structured errors:
 - `multiple_projects_open` - Must specify projectPath
 - `evaluation_error` - Expression evaluation failed
 
+## Language-Specific Limitations
+
+Some debugging features depend on the underlying debugger's capabilities:
+
+### Full Support (Java, Kotlin, Python, JavaScript, TypeScript, PHP, Ruby)
+- ✅ All tools work as expected
+- ✅ Expression evaluation with method calls
+- ✅ Variable modification for all types
+- ✅ Rich type inspection
+
+### Limited Support (Rust, C++, C, Go, Swift)
+These languages use native debuggers (LLDB/GDB) with some limitations:
+
+| Tool | Limitation |
+|------|------------|
+| `evaluate_expression` | Variable inspection works. Method calls (e.g., `s.len()`, `vec.size()`) may fail with "no field named X" errors. |
+| `set_variable` | Works for primitive types (int, float, bool). Complex types (String, Vec, structs) may fail with "could not find item" errors. |
+
+**Workarounds for native languages:**
+- Use `get_variables` to inspect values instead of `evaluate_expression` with method calls
+- For Rust strings, access the underlying data: evaluate `s` instead of `s.len()`
+- Focus on stepping and breakpoints for debugging flow
+
 ## Requirements
 
-- JetBrains IDE (IntelliJ IDEA, PyCharm, WebStorm, etc.)
+- JetBrains IDE (IntelliJ IDEA, PyCharm, WebStorm, RustRover, CLion, GoLand, etc.)
 - IDE must have an open project with a debuggable run configuration
 - This plugin must be installed and enabled
 
