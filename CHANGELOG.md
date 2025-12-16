@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-12-16
+
+### Added
+- **Configurable server port** with IDE-specific defaults (e.g., IntelliJ: 29190, PyCharm: 29192)
+- **IDE-specific server names** (e.g., `intellij-debugger`, `pycharm-debugger`) to run multiple IDEs simultaneously
+- **Port conflict detection** with error notification and settings link
+- **Settings shortcut** - "Change port" link in toolbar
+
+### Changed
+- **Breaking**: Migrated to custom Ktor CIO server - update MCP client configs with new port/name
+- Server URL no longer depends on IDE's built-in server port (was 63342)
+
 ## [1.3.1] - 2025-12-10
 
 ### Changed
