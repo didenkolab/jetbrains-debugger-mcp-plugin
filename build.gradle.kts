@@ -1,7 +1,6 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 
 plugins {
     id("java") // Java support
@@ -33,29 +32,16 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-    // MCP Kotlin SDK - exclude conflicting dependencies to use IntelliJ Platform's bundled versions
-    // The Platform bundles kotlin-reflect and kotlinx-serialization, so we must exclude them
-    // to avoid Plugin Verifier compatibility errors (AbstractMethodError on annotation classes)
+    // MCP Kotlin SDK - exclude kotlinx-coroutines to use IntelliJ Platform's bundled version
     implementation(libs.mcp.kotlin.sdk) {
-        // Exclude coroutines - IntelliJ Platform provides bundled version
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-bom")
         exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-slf4j")
-        // Exclude kotlin-reflect - IntelliJ Platform provides bundled version
-        // Prevents TypeVariableImpl.getAnnotatedBounds() compatibility error
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
-        // Exclude kotlinx-serialization - IntelliJ Platform provides bundled version
-        // Prevents JsonNames.Impl/JsonClassDiscriminator.Impl annotationType() errors
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core-jvm")
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json")
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json-jvm")
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-bom")
     }
 
-    // Kotlinx Serialization - use compileOnly to avoid bundling, use Platform's version at runtime
-    compileOnly(libs.kotlinx.serialization.json)
+    // Kotlinx Serialization
+    implementation(libs.kotlinx.serialization.json)
 
     // Ktor Server (for custom MCP server with configurable port)
     implementation(libs.ktor.server.core) {
@@ -149,18 +135,6 @@ intellijPlatform {
     }
 
     pluginVerification {
-        // Configure failure levels - don't fail on COMPATIBILITY_PROBLEMS caused by
-        // Ktor's embedded kotlin-reflect classes (TypeVariableImpl.getAnnotatedBounds)
-        // and coroutine version mismatches. These are theoretical issues that won't occur
-        // at runtime because IntelliJ Platform provides its own bundled versions.
-        // See: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-types.html
-        failureLevel = listOf(
-            VerifyPluginTask.FailureLevel.INVALID_PLUGIN,
-            VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES,
-            // COMPATIBILITY_PROBLEMS intentionally excluded - Ktor embeds incompatible kotlin-reflect classes
-            // COMPATIBILITY_WARNINGS can be enabled for stricter checking
-        )
-
         ides {
             recommended()
 //            // Additional IDEs for multi-language support verification
