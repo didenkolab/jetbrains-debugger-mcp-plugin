@@ -390,6 +390,14 @@ class FilterToolbar(
 class AgentRuleTipPanel(private val project: Project) : JBPanel<AgentRuleTipPanel>(FlowLayout(FlowLayout.LEFT, 8, 4)) {
 
     companion object {
+        /**
+         * Returns the agent rule text with the IDE-specific server name.
+         */
+        fun getAgentRuleText(): String {
+            val serverName = McpConstants.getServerName()
+            return "IMPORTANT: When debugging, prefer using $serverName MCP tools to interact with the IDE debugger."
+        }
+
         val CONFIG_FILES_HINT = """
             Add this rule to your AI agent's configuration file:
             - Claude Code: CLAUDE.md (project root) or ~/.claude/CLAUDE.md (global)
@@ -404,7 +412,7 @@ class AgentRuleTipPanel(private val project: Project) : JBPanel<AgentRuleTipPane
 
         val iconLabel = JBLabel(AllIcons.General.BalloonInformation)
 
-        val tipLabel = JBLabel("Add jetbrains-debugger MCP rule to your AI agent config").apply {
+        val tipLabel = JBLabel("Add debugger MCP rule to your AI agent config").apply {
             font = font.deriveFont(Font.PLAIN, 11f)
         }
 
@@ -434,13 +442,14 @@ class AgentRuleTipPanel(private val project: Project) : JBPanel<AgentRuleTipPane
     }
 
     private fun copyAgentRule() {
-        CopyPasteManager.getInstance().setContents(StringSelection(McpConstants.AGENT_RULE_TEXT))
+        val agentRuleText = getAgentRuleText()
+        CopyPasteManager.getInstance().setContents(StringSelection(agentRuleText))
 
         NotificationGroupManager.getInstance()
             .getNotificationGroup(McpConstants.NOTIFICATION_GROUP_ID)
             .createNotification(
                 "Agent Rule Copied",
-                "${McpConstants.AGENT_RULE_TEXT}\n\n$CONFIG_FILES_HINT",
+                "$agentRuleText\n\n$CONFIG_FILES_HINT",
                 NotificationType.INFORMATION
             )
             .notify(project)

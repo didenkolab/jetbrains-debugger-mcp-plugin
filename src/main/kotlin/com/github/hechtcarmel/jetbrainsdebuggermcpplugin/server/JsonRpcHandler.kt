@@ -71,7 +71,7 @@ class JsonRpcHandler(
         val result = InitializeResult(
             protocolVersion = McpConstants.MCP_PROTOCOL_VERSION,
             serverInfo = ServerInfo(
-                name = McpConstants.SERVER_NAME,
+                name = McpConstants.getServerName(),
                 version = McpConstants.SERVER_VERSION,
                 description = McpConstants.SERVER_DESCRIPTION
             ),

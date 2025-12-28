@@ -184,24 +184,6 @@ class McpServerService : Disposable {
      */
     fun getServerPort(): Int = McpSettings.getInstance().serverPort
 
-    /**
-     * Returns information about the server status.
-     */
-    fun getServerInfo(): ServerStatusInfo {
-        val port = McpSettings.getInstance().serverPort
-        val isRunning = isServerRunning()
-        return ServerStatusInfo(
-            name = McpConstants.SERVER_NAME,
-            version = McpConstants.SERVER_VERSION,
-            protocolVersion = McpConstants.MCP_PROTOCOL_VERSION,
-            sseUrl = if (isRunning) "http://${McpConstants.DEFAULT_SERVER_HOST}:$port${McpConstants.SSE_ENDPOINT_PATH}" else "Server not running",
-            postUrl = "http://${McpConstants.DEFAULT_SERVER_HOST}:$port${McpConstants.MCP_ENDPOINT_PATH}",
-            port = port,
-            registeredTools = toolRegistry.getAllTools().size,
-            error = serverError?.message,
-            isRunning = isRunning
-        )
-    }
 
     /**
      * Shows a notification when the port is already in use.

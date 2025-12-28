@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+## [3.0.1] - 2025-12-28
+
+### Changed
+- **Claude Code install command** - Now removes legacy `jetbrains-debugger` name in addition to the current IDE-specific name, ensuring clean upgrades from v1.x
+- **Agent rule** - Copied rule now uses IDE-specific server name (e.g., `intellij-debugger`) instead of hardcoded `jetbrains-debugger`
+- **Documentation** - Updated README with IDE-specific server names for all supported IDEs
+
 ## [3.0.0] - 2025-12-24
 
 ### Fixed
