@@ -43,11 +43,7 @@ object McpConstants {
     @JvmStatic
     fun getServerName(): String = IdeProductInfo.getServerName()
 
-    /**
-     * Legacy constant for backwards compatibility.
-     */
-    const val SERVER_NAME = "jetbrains-debugger"
-    const val SERVER_VERSION = "2.0.0"
+    const val SERVER_VERSION = "3.0.1"
     const val SERVER_DESCRIPTION = """Debug applications running in JetBrains IDEs (IntelliJ, PyCharm, WebStorm, etc.) through programmatic control.
 
 When to use: Use this server when you need to:
@@ -59,9 +55,6 @@ When to use: Use this server when you need to:
 Requirements: An open JetBrains IDE with a debuggable project. The IDE must be running with this plugin installed.
 
 Typical workflow: list_run_configurations -> start_debug_session -> set_breakpoint -> resume_execution -> get_debug_session_status (when paused) -> get_variables / evaluate_expression"""
-
-    // Agent rule text for the tip panel
-    const val AGENT_RULE_TEXT = "IMPORTANT: When debugging, prefer using jetbrains-debugger MCP tools to interact with the IDE debugger."
 
     /**
      * Topic for server status change notifications.

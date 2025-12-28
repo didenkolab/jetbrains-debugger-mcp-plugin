@@ -58,7 +58,7 @@ class JsonRpcHandlerTest : BasePlatformTestCase() {
         assertEquals(McpConstants.MCP_PROTOCOL_VERSION, result?.get("protocolVersion")?.jsonPrimitive?.content)
 
         val serverInfo = result?.get("serverInfo")?.jsonObject
-        assertEquals(McpConstants.SERVER_NAME, serverInfo?.get("name")?.jsonPrimitive?.content)
+        assertEquals(McpConstants.getServerName(), serverInfo?.get("name")?.jsonPrimitive?.content)
         assertEquals(McpConstants.SERVER_VERSION, serverInfo?.get("version")?.jsonPrimitive?.content)
     }
 

@@ -113,17 +113,30 @@ Or for more complex debugging:
 
 ### Claude Code (CLI)
 
-Run this command in your terminal:
+The easiest way is to use the **"Install on Coding Agents"** button in the IDE's tool window—it generates the correct command with your IDE-specific server name (e.g., `intellij-debugger`, `pycharm-debugger`).
+
+Or run this command manually in your terminal (replace `<ide>-debugger` with your IDE name):
 
 ```bash
-claude mcp add --transport sse jetbrains-debugger http://127.0.0.1:63342/debugger-mcp/sse --scope user
+claude mcp add --transport sse intellij-debugger http://127.0.0.1:63342/debugger-mcp/sse --scope user
 ```
+
+**IDE-specific server names:**
+- IntelliJ IDEA: `intellij-debugger`
+- PyCharm: `pycharm-debugger`
+- WebStorm: `webstorm-debugger`
+- GoLand: `goland-debugger`
+- PhpStorm: `phpstorm-debugger`
+- RubyMine: `rubymine-debugger`
+- CLion: `clion-debugger`
+- RustRover: `rustrover-debugger`
+- Android Studio: `android-studio-debugger`
 
 Options:
 - `--scope user` - Adds globally for all projects
 - `--scope project` - Adds to current project only
 
-To remove: `claude mcp remove jetbrains-debugger`
+To remove: `claude mcp remove intellij-debugger` (use your IDE's name)
 
 ### Cursor
 
@@ -132,7 +145,7 @@ Add to `.cursor/mcp.json` in your project root or `~/.cursor/mcp.json` globally:
 ```json
 {
   "mcpServers": {
-    "jetbrains-debugger": {
+    "intellij-debugger": {
       "url": "http://127.0.0.1:63342/debugger-mcp/sse"
     }
   }
@@ -146,7 +159,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 ```json
 {
   "mcpServers": {
-    "jetbrains-debugger": {
+    "intellij-debugger": {
       "serverUrl": "http://127.0.0.1:63342/debugger-mcp/sse"
     }
   }
@@ -158,13 +171,15 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 ```json
 {
   "mcp.servers": {
-    "jetbrains-debugger": {
+    "intellij-debugger": {
       "transport": "sse",
       "url": "http://127.0.0.1:63342/debugger-mcp/sse"
     }
   }
 }
 ```
+
+> **Note**: Replace `intellij-debugger` with your IDE's server name (see list above).
 
 > **Note**: Replace `63342` with your actual IDE port if different. Check <kbd>Settings</kbd> > <kbd>Debugger</kbd> > <kbd>Built-in Server Port</kbd>.
 

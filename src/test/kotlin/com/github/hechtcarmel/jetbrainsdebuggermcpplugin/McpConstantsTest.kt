@@ -50,16 +50,17 @@ class McpConstantsTest {
     }
 
     @Test
-    fun `server name is not empty`() {
-        assertTrue(McpConstants.SERVER_NAME.isNotEmpty())
-        assertEquals("jetbrains-debugger", McpConstants.SERVER_NAME)
+    fun `getServerName returns IDE-specific name`() {
+        val serverName = McpConstants.getServerName()
+        assertTrue(serverName.isNotEmpty())
+        assertTrue(serverName.endsWith("-debugger"))
     }
 
     @Test
     fun `server version follows semver pattern`() {
         val semverRegex = Regex("""\d+\.\d+\.\d+(-[\w.]+)?""")
         assertTrue(semverRegex.matches(McpConstants.SERVER_VERSION))
-        assertEquals("2.0.0", McpConstants.SERVER_VERSION)
+        assertEquals("3.0.1", McpConstants.SERVER_VERSION)
     }
 
     @Test
@@ -73,10 +74,4 @@ class McpConstantsTest {
             McpConstants.SERVER_DESCRIPTION.contains("variable", ignoreCase = true))
     }
 
-    @Test
-    fun `agent rule text contains important keyword`() {
-        assertTrue(McpConstants.AGENT_RULE_TEXT.startsWith("IMPORTANT"))
-        assertTrue(McpConstants.AGENT_RULE_TEXT.contains("debugger"))
-        assertTrue(McpConstants.AGENT_RULE_TEXT.contains("jetbrains-debugger"))
-    }
 }

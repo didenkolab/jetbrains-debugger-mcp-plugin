@@ -34,49 +34,71 @@ class ClientConfigGeneratorTest {
     // buildClaudeCodeCommand Tests
 
     @Test
-    fun `buildClaudeCodeCommand generates correct command`() {
+    fun `buildClaudeCodeCommand generates correct command format`() {
         val serverUrl = "http://127.0.0.1:63342/debugger-mcp/sse"
-        val serverName = "jetbrains-debugger"
+        val serverName = "intellij-debugger"
 
         val command = ClientConfigGenerator.buildClaudeCodeCommand(serverUrl, serverName)
 
-        assertTrue(command.contains("claude mcp remove jetbrains-debugger"))
-        assertTrue(command.contains("claude mcp add --transport sse jetbrains-debugger"))
-        assertTrue(command.contains(serverUrl))
-        assertTrue(command.contains("--scope user"))
+        val expectedCommand = "claude mcp remove jetbrains-debugger 2>/dev/null ; " +
+            "claude mcp remove intellij-debugger 2>/dev/null ; " +
+            "claude mcp add --transport sse intellij-debugger http://127.0.0.1:63342/debugger-mcp/sse --scope user"
+
+        assertEquals(
+            expectedCommand,
+            command
+        )
     }
 
     @Test
-    fun `buildClaudeCodeCommand with custom server name`() {
-        val serverUrl = "http://127.0.0.1:8080/mcp"
-        val serverName = "custom-debugger"
-
-        val command = ClientConfigGenerator.buildClaudeCodeCommand(serverUrl, serverName)
-
-        assertTrue(command.contains("claude mcp remove custom-debugger"))
-        assertTrue(command.contains("claude mcp add --transport sse custom-debugger"))
-    }
-
-    @Test
-    fun `buildClaudeCodeCommand includes 2 devnull redirect for remove`() {
+    fun `buildClaudeCodeCommand removes legacy server name`() {
         val command = ClientConfigGenerator.buildClaudeCodeCommand(
-            "http://127.0.0.1:63342/debugger-mcp/sse",
-            "test-server"
+            "http://127.0.0.1:29190/debugger-mcp/sse",
+            "pycharm-debugger"
         )
 
-        assertTrue(command.contains("2>/dev/null"))
+        assertTrue(
+            command.contains("claude mcp remove jetbrains-debugger")
+        )
     }
 
     @Test
-    fun `buildClaudeCodeCommand separates remove and add with semicolon`() {
+    fun `buildClaudeCodeCommand includes 2 devnull redirect for remove commands`() {
         val command = ClientConfigGenerator.buildClaudeCodeCommand(
             "http://127.0.0.1:63342/debugger-mcp/sse",
-            "test-server"
+            "webstorm-debugger"
+        )
+
+        // Both remove commands should have 2>/dev/null
+        val removeCount = command.split("2>/dev/null").size - 1
+        assertEquals(2, removeCount)
+    }
+
+    @Test
+    fun `buildClaudeCodeCommand separates commands with semicolon`() {
+        val command = ClientConfigGenerator.buildClaudeCodeCommand(
+            "http://127.0.0.1:63342/debugger-mcp/sse",
+            "goland-debugger"
         )
 
         assertTrue(command.contains(" ; "))
         val parts = command.split(" ; ")
-        assertEquals(2, parts.size)
+        assertEquals(3, parts.size)
+    }
+
+    @Test
+    fun `buildClaudeCodeCommand remove comes before add`() {
+        val command = ClientConfigGenerator.buildClaudeCodeCommand(
+            "http://127.0.0.1:63342/debugger-mcp/sse",
+            "clion-debugger"
+        )
+
+        val lastRemoveIndex = command.lastIndexOf("remove")
+        val addIndex = command.indexOf("add")
+
+        assertTrue(
+            lastRemoveIndex < addIndex
+        )
     }
 
     // getConfigLocationHint Tests
