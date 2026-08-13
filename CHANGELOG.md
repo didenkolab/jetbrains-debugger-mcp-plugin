@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [5.0.2] - 2026-08-13
+
 ### Fixed
 
 - **The Claude Code / Codex CLI install commands now work on Windows** ([#67](https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/issues/67)). Both the copied command and the "Install Now" action assumed a POSIX shell (`2>/dev/null`, `;`, `sh -c`). On Windows the copied command is now wrapped as `cmd.exe /d /c "... 2>NUL & ..."` — pasteable into both cmd.exe and PowerShell — and "Install Now" executes through `cmd.exe /d /c` instead of `sh -c`, matching the approach already used by the Index MCP Server plugin.
@@ -273,7 +275,8 @@
 - MCP protocol version 2024-11-05
 - Compatible with all JetBrains IDEs that support XDebugger (IntelliJ IDEA, PyCharm, WebStorm, GoLand, PhpStorm, RubyMine, CLion, Rider, Android Studio)
 
-[Unreleased]: https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/compare/v5.0.1...HEAD
+[Unreleased]: https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/compare/v5.0.2...HEAD
+[5.0.2]: https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/compare/v5.0.1...v5.0.2
 [5.0.1]: https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/compare/v4.4.0...v5.0.0
 [4.4.0]: https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/compare/v4.3.1...v4.4.0
