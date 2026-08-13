@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Claude Code / Codex CLI install commands now work on Windows** ([#67](https://github.com/hechtcarmel/jetbrains-debugger-mcp-plugin/issues/67)). Both the copied command and the "Install Now" action assumed a POSIX shell (`2>/dev/null`, `;`, `sh -c`). On Windows the copied command is now wrapped as `cmd.exe /d /c "... 2>NUL & ..."` — pasteable into both cmd.exe and PowerShell — and "Install Now" executes through `cmd.exe /d /c` instead of `sh -c`, matching the approach already used by the Index MCP Server plugin.
+
 ## [5.0.1] - 2026-08-05
 
 ### Fixed

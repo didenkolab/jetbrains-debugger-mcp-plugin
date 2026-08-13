@@ -146,6 +146,81 @@ class ClientConfigGeneratorTest {
         assertTrue(removeIndex < addIndex)
     }
 
+    // Windows Platform Tests (issue #67)
+
+    @Test
+    fun `buildClaudeCodeCommand for Windows uses cmd compatible syntax`() {
+        val command = ClientConfigGenerator.buildClaudeCodeCommand(
+            "http://127.0.0.1:29190/debugger-mcp/streamable-http",
+            "intellij-debugger",
+            ClientConfigGenerator.CommandPlatform.WINDOWS
+        )
+
+        val expectedCommand = "claude mcp remove jetbrains-debugger 2>NUL & " +
+            "claude mcp remove intellij-debugger 2>NUL & " +
+            "claude mcp add --transport http intellij-debugger http://127.0.0.1:29190/debugger-mcp/streamable-http --scope user"
+
+        assertEquals(expectedCommand, command)
+        assertFalse("Windows command should not use POSIX /dev/null", command.contains("/dev/null"))
+        assertFalse("Windows command should not use POSIX ; separator", command.contains(";"))
+    }
+
+    @Test
+    fun `buildCodexCommand for Windows uses cmd compatible syntax`() {
+        val command = ClientConfigGenerator.buildCodexCommand(
+            "http://127.0.0.1:29190/debugger-mcp/streamable-http",
+            "intellij-debugger",
+            ClientConfigGenerator.CommandPlatform.WINDOWS
+        )
+
+        val expectedCommand = "codex mcp remove intellij-debugger >NUL 2>&1 & " +
+            "codex mcp add intellij-debugger --url http://127.0.0.1:29190/debugger-mcp/streamable-http"
+
+        assertEquals(expectedCommand, command)
+        assertFalse("Windows command should not use POSIX /dev/null", command.contains("/dev/null"))
+        assertFalse("Windows command should not use POSIX ; separator", command.contains(";"))
+    }
+
+    @Test
+    fun `buildShellInvocation for POSIX uses sh`() {
+        val invocation = ClientConfigGenerator.buildShellInvocation(
+            "echo test",
+            ClientConfigGenerator.CommandPlatform.POSIX
+        )
+
+        assertEquals(listOf("sh", "-c", "echo test"), invocation)
+    }
+
+    @Test
+    fun `buildShellInvocation for Windows uses cmd exe`() {
+        val invocation = ClientConfigGenerator.buildShellInvocation(
+            "echo test",
+            ClientConfigGenerator.CommandPlatform.WINDOWS
+        )
+
+        assertEquals(listOf("cmd.exe", "/d", "/c", "echo test"), invocation)
+    }
+
+    @Test
+    fun `buildTerminalCommand for POSIX returns command unchanged`() {
+        val terminalCommand = ClientConfigGenerator.buildTerminalCommand(
+            "echo test",
+            ClientConfigGenerator.CommandPlatform.POSIX
+        )
+
+        assertEquals("echo test", terminalCommand)
+    }
+
+    @Test
+    fun `buildTerminalCommand for Windows wraps command for cmd and PowerShell paste`() {
+        val terminalCommand = ClientConfigGenerator.buildTerminalCommand(
+            "echo test",
+            ClientConfigGenerator.CommandPlatform.WINDOWS
+        )
+
+        assertEquals("cmd.exe /d /c \"echo test\"", terminalCommand)
+    }
+
     // getConfigLocationHint Tests
 
     @Test
