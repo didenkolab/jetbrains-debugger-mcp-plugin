@@ -3,6 +3,7 @@ package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.util
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.McpConstants
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.McpServerService
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.settings.McpSettings
+import com.intellij.openapi.util.SystemInfo
 
 /**
  * Generates MCP client configuration snippets for various AI coding assistants.
@@ -56,6 +57,17 @@ object ClientConfigGenerator {
     }
 
     /**
+     * Shell dialect used for install commands: POSIX sh on macOS/Linux, cmd.exe on Windows.
+     */
+    enum class CommandPlatform {
+        POSIX,
+        WINDOWS
+    }
+
+    private fun currentCommandPlatform(): CommandPlatform =
+        if (SystemInfo.isWindows) CommandPlatform.WINDOWS else CommandPlatform.POSIX
+
+    /**
      * Returns the IDE-specific server name (e.g., "intellij-debugger", "pycharm-debugger").
      */
     fun getDefaultServerName(): String = McpConstants.getServerName()
@@ -65,14 +77,19 @@ object ClientConfigGenerator {
      *
      * @param clientType The type of MCP client to generate configuration for
      * @param serverName Optional custom name for the server (defaults to IDE-specific name)
+     * @param platform The command platform to use for command-based clients
      * @return The configuration string in the appropriate format for the client
      */
-    fun generateConfig(clientType: ClientType, serverName: String = getDefaultServerName()): String {
+    fun generateConfig(
+        clientType: ClientType,
+        serverName: String = getDefaultServerName(),
+        platform: CommandPlatform = currentCommandPlatform()
+    ): String {
         val serverUrl = getStreamableHttpUrlOrDefault()
 
         return when (clientType) {
-            ClientType.CLAUDE_CODE -> generateClaudeCodeConfig(serverUrl, serverName)
-            ClientType.CODEX_CLI -> generateCodexConfig(serverUrl, serverName)
+            ClientType.CLAUDE_CODE -> buildTerminalCommand(buildClaudeCodeCommand(serverUrl, serverName, platform), platform)
+            ClientType.CODEX_CLI -> buildTerminalCommand(buildCodexCommand(serverUrl, serverName, platform), platform)
             ClientType.GEMINI_CLI -> generateGeminiCliConfig(serverUrl, serverName)
             ClientType.CURSOR -> generateCursorConfig(serverUrl, serverName)
         }
@@ -83,16 +100,50 @@ object ClientConfigGenerator {
      *
      * @param clientType The type of MCP client
      * @param serverName Optional custom name for the server (defaults to IDE-specific name)
+     * @param platform The command platform to use for the install command
      * @return The install command, or null if the client doesn't support install commands
      */
-    fun generateInstallCommand(clientType: ClientType, serverName: String = getDefaultServerName()): String? {
+    fun generateInstallCommand(
+        clientType: ClientType,
+        serverName: String = getDefaultServerName(),
+        platform: CommandPlatform = currentCommandPlatform()
+    ): String? {
         if (!clientType.supportsInstallCommand) return null
         val serverUrl = getStreamableHttpUrlOrDefault()
 
         return when (clientType) {
-            ClientType.CLAUDE_CODE -> buildClaudeCodeCommand(serverUrl, serverName)
-            ClientType.CODEX_CLI -> buildCodexCommand(serverUrl, serverName)
+            ClientType.CLAUDE_CODE -> buildClaudeCodeCommand(serverUrl, serverName, platform)
+            ClientType.CODEX_CLI -> buildCodexCommand(serverUrl, serverName, platform)
             else -> null
+        }
+    }
+
+    /**
+     * Builds the process arguments used to execute an install command on the current platform.
+     * POSIX runs through `sh -c`; Windows through `cmd.exe /d /c` (/d skips AutoRun hooks).
+     */
+    internal fun buildShellInvocation(
+        command: String,
+        platform: CommandPlatform = currentCommandPlatform()
+    ): List<String> {
+        return when (platform) {
+            CommandPlatform.POSIX -> listOf("sh", "-c", command)
+            CommandPlatform.WINDOWS -> listOf("cmd.exe", "/d", "/c", command)
+        }
+    }
+
+    /**
+     * Builds a command suitable for copying into a terminal.
+     * On Windows the command is wrapped in an explicit `cmd.exe /d /c "..."` call so it works
+     * when pasted into either cmd.exe or PowerShell (the redirects and `&` are cmd syntax).
+     */
+    internal fun buildTerminalCommand(
+        command: String,
+        platform: CommandPlatform = currentCommandPlatform()
+    ): String {
+        return when (platform) {
+            CommandPlatform.POSIX -> command
+            CommandPlatform.WINDOWS -> "cmd.exe /d /c \"${command.replace("\"", "\"\"")}\""
         }
     }
 
@@ -106,24 +157,30 @@ object ClientConfigGenerator {
      *
      * Removes any existing installation first (to handle port changes), then adds the server.
      * Also removes legacy server names from v1.x (jetbrains-debugger) to clean up after upgrade.
-     * The remove commands use 2>/dev/null to suppress errors if the server wasn't installed.
-     * Uses `;` between commands so add runs regardless of remove's exit status.
+     * Remove command failures are suppressed because the server may not be installed yet.
+     * Uses a platform-specific command separator so add runs regardless of remove's exit status.
      *
      * This method is internal for testing purposes.
      *
      * @param serverUrl The URL of the MCP server
      * @param serverName The name to register the server as
+     * @param platform The command platform dialect to generate for
      * @return A shell command that removes legacy names, removes current name, and reinstalls the MCP server
      */
-    internal fun buildClaudeCodeCommand(serverUrl: String, serverName: String): String {
-        val removeLegacyCmd = "claude mcp remove $LEGACY_SERVER_NAME 2>/dev/null"
-        val removeCmd = "claude mcp remove $serverName 2>/dev/null"
+    internal fun buildClaudeCodeCommand(
+        serverUrl: String,
+        serverName: String,
+        platform: CommandPlatform = CommandPlatform.POSIX
+    ): String {
+        val removeErrorRedirect = when (platform) {
+            CommandPlatform.POSIX -> "2>/dev/null"
+            CommandPlatform.WINDOWS -> "2>NUL"
+        }
+        val separator = commandSeparator(platform)
+        val removeLegacyCmd = "claude mcp remove $LEGACY_SERVER_NAME $removeErrorRedirect"
+        val removeCmd = "claude mcp remove $serverName $removeErrorRedirect"
         val addCmd = "claude mcp add --transport http $serverName $serverUrl --scope user"
-        return "$removeLegacyCmd ; $removeCmd ; $addCmd"
-    }
-
-    private fun generateClaudeCodeConfig(serverUrl: String, serverName: String): String {
-        return buildClaudeCodeCommand(serverUrl, serverName)
+        return "$removeLegacyCmd$separator$removeCmd$separator$addCmd"
     }
 
     /**
@@ -131,24 +188,36 @@ object ClientConfigGenerator {
      *
      * Removes any existing installation first, then adds the server using native
      * Streamable HTTP transport (no mcp-remote bridge needed).
-     * The remove command uses 2>/dev/null to suppress errors if the server wasn't installed.
-     * Uses `;` between commands so add runs regardless of remove's exit status.
+     * Remove command failures are suppressed because the server may not be installed yet.
+     * Uses a platform-specific command separator so add runs regardless of remove's exit status.
      *
      * This method is internal for testing purposes.
      *
      * @param serverUrl The URL of the MCP server
      * @param serverName The name to register the server as
+     * @param platform The command platform dialect to generate for
      * @return A shell command that removes the current name and reinstalls the MCP server
      */
-    internal fun buildCodexCommand(serverUrl: String, serverName: String): String {
-        val removeCmd = "codex mcp remove $serverName >/dev/null 2>&1"
+    internal fun buildCodexCommand(
+        serverUrl: String,
+        serverName: String,
+        platform: CommandPlatform = CommandPlatform.POSIX
+    ): String {
+        val removeOutputRedirect = when (platform) {
+            CommandPlatform.POSIX -> ">/dev/null 2>&1"
+            CommandPlatform.WINDOWS -> ">NUL 2>&1"
+        }
+        val separator = commandSeparator(platform)
+        val removeCmd = "codex mcp remove $serverName $removeOutputRedirect"
         val addCmd = "codex mcp add $serverName --url $serverUrl"
-        return "$removeCmd ; $addCmd"
+        return "$removeCmd$separator$addCmd"
     }
 
-    private fun generateCodexConfig(serverUrl: String, serverName: String): String {
-        return buildCodexCommand(serverUrl, serverName)
-    }
+    private fun commandSeparator(platform: CommandPlatform): String =
+        when (platform) {
+            CommandPlatform.POSIX -> " ; "
+            CommandPlatform.WINDOWS -> " & "
+        }
 
     /**
      * Generates Gemini CLI MCP configuration.
