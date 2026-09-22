@@ -345,3 +345,62 @@ In `Default blocklist` and `Read-only`, expressions containing **interpolated st
 - Variable inspection works
 - Method calls (e.g., `s.len()`, `vec.size()`) may fail
 - Use `get_variables` as an alternative
+
+## IDE Code Actions
+
+### `find_usages`
+
+Semantic references to the symbol at a file position, through the IDE index. Not a text
+search: the symbol is resolved first, so usages are found under aliases and an unrelated
+identifier sharing the name is never matched.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `file_path` | string | **Yes** | | Absolute path |
+| `line` | integer | **Yes** | | 1-based line |
+| `column` | integer | No | `1` | 1-based column |
+| `max_results` | integer | No | `100` | Cap on usages returned |
+| `include_comments` | boolean | No | `false` | Include references inside comments |
+
+**Returns:** `target`, `targetKind`, `declaration`, `usages`, `total`, `omitted`,
+`commentReferencesExcluded`.
+
+**On comments:** a doc comment holds a real reference to what it documents, so the IDE
+reports it. They are excluded by default and counted, because they are rarely what "who
+calls this" means.
+
+### `list_quick_fixes`
+
+Runs the project's enabled inspections over a file and lists each problem with the fixes the
+IDE offers - the Alt+Enter menu without an editor. Uses the project's own profile.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `file_path` | string | **Yes** | | Absolute path |
+| `line` | integer | No | | Narrow to one line |
+| `max_problems` | integer | No | `50` | Cap |
+
+**Returns:** `file`, `problems` (line, description, inspection, fixes), `total`, `omitted`,
+`withoutFixes`.
+
+### `apply_quick_fix`
+
+Applies a fix by NAME. With `apply_all`, fixes every matching site in the file in one call,
+each edit made by the IDE, all landing as a single undo step.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `file_path` | string | **Yes** | | Absolute path |
+| `fix_name` | string | **Yes** | | Fix name from `list_quick_fixes` |
+| `line` | integer | No | | Fix one problem at this line |
+| `apply_all` | boolean | No | `false` | Fix every match in the file |
+| `max_fixes` | integer | No | `50` | Safety cap for `apply_all` |
+
+**Prefer the name over the family.** One family can hold mutually inverse fixes, and matching
+the family can apply one and then undo it.
+
+**Stops early on purpose:** if a pass does not reduce the number of matching problems, the run
+stops and says so - a reversible fix cannot loop. A fix that declines to change a site is
+reported as such rather than counted as applied.
+
+Changes are saved to disk, because the next step is usually to read the file or build.

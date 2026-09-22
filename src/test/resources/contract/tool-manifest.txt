@@ -1,7 +1,89 @@
 # MCP tool manifest — golden snapshot
 # Snapshot of the SDK Tool as serialized to clients, not of the authored schema.
 # Regenerate: ./gradlew test --tests "*ToolManifestContractTest" -Dcontract.update=true
-# tools: 23
+# tools: 26
+
+## apply_quick_fix
+description:
+  Applies an IDE quick fix, matched against the fix NAME reported by list_quick_fixes.
+  The family name also works, but prefer the name: one family can hold mutually inverse
+  fixes, and matching the family can apply one and then undo it.
+  With a line, fixes that single problem. With apply_all, fixes every matching problem in
+  the file - one call instead of one text edit per site, each edit made by the IDE, and
+  all of them landing as a single undo step.
+  apply_all stops as soon as a pass stops reducing the number of matching problems, so a
+  reversible fix cannot loop. A fix that declines to change anything is reported as such
+  rather than counted as applied.
+  Changes are saved to disk, because the next step is usually to read the file or build.
+annotations:
+  {
+    "destructiveHint": false,
+    "idempotentHint": false,
+    "openWorldHint": false,
+    "readOnlyHint": false,
+    "title": "Apply Quick Fix"
+  }
+inputSchema:
+  {
+    "properties": {
+      "apply_all": {
+        "description": "Fix every matching problem in the file. Default false.",
+        "type": "boolean"
+      },
+      "file_path": {
+        "description": "Absolute path to the file.",
+        "type": "string"
+      },
+      "fix_name": {
+        "description": "Fix name as reported by list_quick_fixes. The family name is accepted too, but is less precise.",
+        "type": "string"
+      },
+      "line": {
+        "description": "1-based line of the single problem to fix.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_fixes": {
+        "description": "Safety cap for apply_all. Default 50.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "project_path": {
+        "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_path",
+      "fix_name"
+    ],
+    "type": "object"
+  }
+outputSchema:
+  {
+    "properties": {
+      "applied": {
+        "description": "Each fix that actually changed the file, with its line",
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "file": {
+        "type": "string"
+      },
+      "message": {
+        "description": "Why the run ended: finished, capped, or stopped making progress",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file",
+      "applied",
+      "message"
+    ],
+    "type": "object"
+  }
 
 ## evaluate_expression
 description:
@@ -88,6 +170,104 @@ inputSchema:
   }
 outputSchema:
   <none>
+
+## find_usages
+description:
+  Finds every semantic reference to the symbol at a file position, using the IDE's index.
+  This is not a text search: the symbol is resolved first, so usages are found under
+  aliases and an unrelated identifier sharing the name is never matched.
+  References inside comments are real - a doc comment references what it documents - but
+  are excluded by default, because they are rarely what "who calls this" means; set
+  include_comments to see them.
+  Line and column are 1-based, as the editor and search tools report them.
+  Prefer this over a text search whenever the question is "who uses this".
+annotations:
+  {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false,
+    "readOnlyHint": true,
+    "title": "Find Usages"
+  }
+inputSchema:
+  {
+    "properties": {
+      "column": {
+        "description": "1-based column. Defaults to 1, which is usually enough when the line declares the symbol.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "file_path": {
+        "description": "Absolute path to the file.",
+        "type": "string"
+      },
+      "include_comments": {
+        "description": "Include references that live in comments. Default false.",
+        "type": "boolean"
+      },
+      "line": {
+        "description": "1-based line number.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_results": {
+        "description": "Maximum usages to return. Default 100.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "project_path": {
+        "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_path",
+      "line"
+    ],
+    "type": "object"
+  }
+outputSchema:
+  {
+    "properties": {
+      "commentReferencesExcluded": {
+        "description": "Comment references left out; pass include_comments to see them",
+        "type": "integer"
+      },
+      "declaration": {
+        "description": "Where the symbol is declared",
+        "type": "object"
+      },
+      "omitted": {
+        "description": "Usages beyond max_results",
+        "type": "integer"
+      },
+      "target": {
+        "description": "Name of the resolved symbol",
+        "type": "string"
+      },
+      "targetKind": {
+        "description": "PSI class of the resolved symbol",
+        "type": "string"
+      },
+      "total": {
+        "type": "integer"
+      },
+      "usages": {
+        "description": "Each with file, line, column, the source line, and inComment",
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "target",
+      "targetKind",
+      "usages",
+      "total"
+    ],
+    "type": "object"
+  }
 
 ## get_debug_session_status
 description:
@@ -642,6 +822,81 @@ inputSchema:
   }
 outputSchema:
   <none>
+
+## list_quick_fixes
+description:
+  Runs this project's enabled inspections over a file and lists each problem together with
+  the fixes the IDE offers for it - the Alt+Enter menu, reached without an editor.
+  It uses the project's own inspection profile, so it reports what this project considers
+  a problem rather than a fixed set.
+  Pass a line to narrow to one. Problems carrying no automatic fix are counted, not listed.
+  Use the reported fix NAME with apply_quick_fix.
+annotations:
+  {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false,
+    "readOnlyHint": true,
+    "title": "List Quick Fixes"
+  }
+inputSchema:
+  {
+    "properties": {
+      "file_path": {
+        "description": "Absolute path to the file.",
+        "type": "string"
+      },
+      "line": {
+        "description": "1-based line to narrow to. Omit for the whole file.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "max_problems": {
+        "description": "Maximum problems to return. Default 50.",
+        "minimum": 1,
+        "type": "integer"
+      },
+      "project_path": {
+        "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      }
+    },
+    "required": [
+      "file_path"
+    ],
+    "type": "object"
+  }
+outputSchema:
+  {
+    "properties": {
+      "file": {
+        "type": "string"
+      },
+      "omitted": {
+        "type": "integer"
+      },
+      "problems": {
+        "description": "Each with line, description, inspection, and its fixes",
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "total": {
+        "type": "integer"
+      },
+      "withoutFixes": {
+        "description": "Problems reported with no automatic fix available",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "file",
+      "problems",
+      "total"
+    ],
+    "type": "object"
+  }
 
 ## list_run_configurations
 description:

@@ -43,7 +43,10 @@ class ToolManifestContractTest {
          * otherwise the snapshot would be self-consistent and green.
          */
         val EXPECTED_TOOL_NAMES = setOf(
+            "apply_quick_fix",
             "evaluate_expression",
+            "find_usages",
+            "list_quick_fixes",
             "execute_run_configuration",
             "get_debug_session_status",
             "get_source_context",
