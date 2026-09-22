@@ -7,6 +7,8 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.VariablesR
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.ApplyQuickFixResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.FindUsagesResult
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.QuickFixesResult
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.TraceExecutionResult
+
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.models.WaitForPauseResult
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -47,6 +49,8 @@ class OutputSchemaFidelityTest {
             "find_usages" to serializer<FindUsagesResult>().descriptor,
             "list_quick_fixes" to serializer<QuickFixesResult>().descriptor,
             "apply_quick_fix" to serializer<ApplyQuickFixResult>().descriptor,
+            "trace_execution" to serializer<TraceExecutionResult>().descriptor,
+
         )
     }
 

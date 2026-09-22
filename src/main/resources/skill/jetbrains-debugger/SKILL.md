@@ -8,6 +8,8 @@ description: >-
   step_over, step_into, step_out, run_to_line, wait_for_pause, get_stack_trace, select_stack_frame,
   list_threads, get_variables, set_variable, get_source_context, evaluate_expression,
   find_usages, list_quick_fixes, apply_quick_fix.
+  trace_execution.
+
   Use when debugging any application, investigating bugs, tracing execution flow, inspecting
   runtime state, or when the user says "debug", "breakpoint", "step through", "inspect variable",
   "why is this returning X", "trace execution", or similar debugging-related requests.

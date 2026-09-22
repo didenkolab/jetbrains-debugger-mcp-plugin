@@ -57,7 +57,8 @@ Unlike manual debugging, this plugin enables:
 - **Rich Context in Single Calls** - Get variables, stack, and source in one request
 - **Programmatic Breakpoint Control** - Set conditional breakpoints with complex expressions
 - **Cross-IDE Compatibility** - Works with any JetBrains IDE that supports XDebugger
-- **26 Comprehensive Tools** - Full debugging capability through MCP
+- **27 Comprehensive Tools** - Full debugging capability through MCP
+
 - **Configurable Server** - IDE-specific ports with customizable host binding
 
 Perfect for AI-assisted development workflows where you want your assistant to investigate bugs, validate fixes, or explore code behavior autonomously.
@@ -228,7 +229,9 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Available Tools
 
-The plugin provides **26 MCP tools** organized by category:
+The plugin provides **27 MCP tools** organized by category:
+The plugin provides **27 MCP tools** organized by category:
+
 
 ### Run Configuration Tools
 
@@ -300,6 +303,12 @@ The plugin provides **26 MCP tools** organized by category:
 | `find_usages` | Semantic references to a symbol through the IDE index, not a text search |
 | `list_quick_fixes` | Problems in a file with the fixes the IDE offers - the Alt+Enter menu |
 | `apply_quick_fix` | Apply a fix, optionally to every matching site in the file |
+### Tracing
+
+| Tool | Description |
+|------|-------------|
+| `trace_execution` | Run a configuration, record expressions at each probe, return the whole transcript in one call |
+
 
 > **Note**: For detailed tool documentation with parameters, examples, and response formats, see [USAGE.md](USAGE.md).
 

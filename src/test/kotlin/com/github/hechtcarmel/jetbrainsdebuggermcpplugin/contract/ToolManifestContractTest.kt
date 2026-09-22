@@ -47,6 +47,8 @@ class ToolManifestContractTest {
             "evaluate_expression",
             "find_usages",
             "list_quick_fixes",
+        "trace_execution",
+
             "execute_run_configuration",
             "get_debug_session_status",
             "get_source_context",

@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.ide.FindUsagesTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.ide.ListQuickFixesTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.ide.ApplyQuickFixTool
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.trace.TraceExecutionTool
+
 
 class ToolRegistry {
     private val tools = ConcurrentHashMap<String, McpTool>()
@@ -95,5 +97,8 @@ class ToolRegistry {
         register(FindUsagesTool())
         register(ListQuickFixesTool())
         register(ApplyQuickFixTool())
+        // Trace
+        register(TraceExecutionTool())
+
     }
 }
