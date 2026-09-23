@@ -20,6 +20,8 @@ import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.session.StartDebu
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.session.StopDebugSessionTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack.GetStackTraceTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.capability.DescribeBackendTool
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.output.GetSessionOutputTool
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack.ListExecutionUnitsTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack.ListThreadsTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.stack.SelectStackFrameTool
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.tools.variable.GetVariablesTool
@@ -81,6 +83,8 @@ class ToolRegistry {
         // Stack Frame Tools (P1)
         register(SelectStackFrameTool())
         register(DescribeBackendTool())
+        register(GetSessionOutputTool())
+        register(ListExecutionUnitsTool())
         register(ListThreadsTool())
 
         // Variable Tools (P0)

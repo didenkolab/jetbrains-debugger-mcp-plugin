@@ -4,6 +4,34 @@
 
 ## [Unreleased]
 
+## [5.2.0] - 2026-09-23
+
+### Added
+
+- **`get_session_output`** returns what the debugged program printed on stdout and stderr, with a
+  cursor so it can be tailed.
+
+  The IDE already shows this in a console, and that was the problem rather than the solution: a
+  console is for a person. An agent stopped at a breakpoint could read the stack and the variables
+  and not the line the program had just printed -- often the shortest route to the answer, and for
+  a library that logs instead of throwing, the only route. Capture starts when a session starts
+  rather than when the tool is first called, because a panic message arrives once and asking for it
+  afterwards is too late. The buffer is bounded, and says how many lines it dropped: a silent drop
+  would let a reader conclude the program was quiet when it was the opposite.
+
+- **`list_execution_units`** is `list_threads` answered neutrally. "Thread" is the wrong word in
+  more runtimes than it is the right one -- Go has goroutines, Python has threads plus asyncio
+  tasks -- and an agent told "thread" reasons about a thing that is not there. Each unit carries
+  the kind it actually is, derived from the engine attached. `list_threads` is unchanged and stays.
+
+### Changed
+
+- **`describe_backend` no longer claims watchpoints are unreachable.** It still reports them as
+  absent, which is true of this tool surface, but the stated reason was wrong: a field watchpoint
+  is an ordinary `XBreakpointType` for the languages that have one, registered at the same
+  extension point this plugin already enumerates. Adding them is per-language work, not a blocked
+  door, and a comment asserting otherwise would have stopped the next person from trying.
+
 ## [5.1.0] - 2026-09-23
 
 ### Added

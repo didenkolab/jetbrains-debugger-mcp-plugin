@@ -94,7 +94,15 @@ class DescribeBackendTool : AbstractMcpTool() {
 internal enum class DebugEngine(
     val language: String?,
     private val classMarkers: List<String>,
-    private val richEvaluation: Boolean
+    private val richEvaluation: Boolean,
+    /**
+     * What this runtime calls its unit of execution.
+     *
+     * "Thread" is the wrong word in more runtimes than it is the right one, and
+     * calling a goroutine a thread makes an agent reason about a thing that is
+     * not there.
+     */
+    val unitKind: String = "thread"
 ) {
     JVM("jvm", listOf("com.intellij.debugger.engine.JavaDebugProcess", "JavaDebugProcess"), true),
     PYTHON("python", listOf("com.jetbrains.python.debugger.PyDebugProcess", "PyDebugProcess"), true),
@@ -113,15 +121,16 @@ internal enum class DebugEngine(
     NATIVE("native", listOf("com.jetbrains.cidr", "CidrDebugProcess", "LLDBDriver", "GDBDriver"), false),
 
     /** Go through Delve inside the IDE. */
-    GO("go", listOf("com.goide.dlv", "DlvDebugProcess"), false),
+    GO("go", listOf("com.goide.dlv", "DlvDebugProcess"), false, unitKind = "goroutine"),
 
     UNKNOWN(null, emptyList(), false);
 
     fun capabilities(): BackendCapabilities = BackendCapabilities(
         setVariable = if (richEvaluation) "full" else "primitives",
         evalCallsFunctions = if (richEvaluation) "full" else "guarded",
-        // The language-agnostic API exposes no watchpoints at all, whatever the
-        // engine underneath happens to support.
+        // No tool here sets one. Not because they are unreachable -- a field
+        // watchpoint is an ordinary XBreakpointType for the languages that have
+        // one -- but because the capability describes what this surface offers.
         watchpoints = "none",
         // XBreakpoint has no hit-count accessor; the counts live in
         // engine-specific code this plugin does not reach.

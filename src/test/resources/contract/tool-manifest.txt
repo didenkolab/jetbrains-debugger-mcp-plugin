@@ -1,7 +1,7 @@
 # MCP tool manifest — golden snapshot
 # Snapshot of the SDK Tool as serialized to clients, not of the authored schema.
 # Regenerate: ./gradlew test --tests "*ToolManifestContractTest" -Dcontract.update=true
-# tools: 28
+# tools: 30
 
 ## apply_quick_fix
 description:
@@ -552,6 +552,45 @@ outputSchema:
     "type": "object"
   }
 
+## get_session_output
+description:
+  Returns what the debugged program printed on stdout and stderr.
+  Pass the previous call's next_since as 'since' to read only what is new.
+  Keeps working after the process exits, which is when a program's last words matter most.
+annotations:
+  {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false,
+    "readOnlyHint": true,
+    "title": "Get Session Output"
+  }
+inputSchema:
+  {
+    "properties": {
+      "limit": {
+        "description": "Maximum lines to return. Defaults to 200.",
+        "type": "integer"
+      },
+      "project_path": {
+        "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      },
+      "session_id": {
+        "description": "Debug session ID. Uses current session if omitted.",
+        "type": "string"
+      },
+      "since": {
+        "description": "Return only output newer than this sequence number. Use the previous reply's next_since.",
+        "type": "integer"
+      }
+    },
+    "required": [],
+    "type": "object"
+  }
+outputSchema:
+  <none>
+
 ## get_source_context
 description:
   Returns source code lines around a specific location or the current execution point.
@@ -847,6 +886,37 @@ inputSchema:
     "properties": {
       "project_path": {
         "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      }
+    },
+    "required": [],
+    "type": "object"
+  }
+outputSchema:
+  <none>
+
+## list_execution_units
+description:
+  Lists the debugged program's units of execution -- threads, goroutines or tasks -- with their
+  state and which one is current. Each carries the kind it actually is, so nothing has to be
+  assumed from the tool's name. Equivalent to list_threads, phrased for every runtime.
+annotations:
+  {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false,
+    "readOnlyHint": true,
+    "title": "List Execution Units"
+  }
+inputSchema:
+  {
+    "properties": {
+      "project_path": {
+        "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      },
+      "session_id": {
+        "description": "Debug session ID. Uses current session if omitted.",
         "type": "string"
       }
     },

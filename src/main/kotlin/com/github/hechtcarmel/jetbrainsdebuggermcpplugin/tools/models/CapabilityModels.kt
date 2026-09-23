@@ -22,7 +22,17 @@ data class BackendCapabilities(
     val setVariable: String,
     /** "full", "guarded" or "none" -- whether an expression may call functions. */
     val evalCallsFunctions: String,
-    /** "full" or "none". The language-agnostic IDE API exposes no watchpoints. */
+    /**
+     * "full" or "none" -- whether this server offers a watchpoint tool.
+     *
+     * None, and the reason is worth stating precisely because the obvious one is
+     * wrong. It is not that watchpoints are unreachable: a field watchpoint is an
+     * ordinary `XBreakpointType` for the languages that have one
+     * (`JavaFieldBreakpointType`, for instance), registered at the same extension
+     * point this plugin already enumerates. It is that no tool here exposes them,
+     * and the capability describes the tool surface rather than the IDE's reach.
+     * Adding them is per-language work, not a blocked door.
+     */
     val watchpoints: String,
     /**
      * "per_unit", "total" or "none".
@@ -67,4 +77,55 @@ data class BackendDescription(
      */
     val withoutSession: Boolean,
     val message: String
+)
+
+
+/**
+ * One unit of execution, named neutrally.
+ *
+ * "Thread" is the wrong word in more runtimes than it is the right one: Go has
+ * goroutines, Python has threads plus asyncio tasks, a browser has one thread and
+ * an async stack. The label travels with the unit so a caller does not have to
+ * guess which it is, and so one tool name serves every runtime.
+ */
+@Serializable
+data class ExecutionUnitInfo(
+    val id: String,
+    /** "thread", "goroutine" or "task", as far as the engine reveals it. */
+    val kind: String,
+    val name: String? = null,
+    val state: String,
+    val isCurrent: Boolean = false
+)
+
+@Serializable
+data class ExecutionUnitListResult(
+    val sessionId: String,
+    val units: List<ExecutionUnitInfo>,
+    val currentUnitId: String? = null,
+    val message: String? = null
+)
+
+/** One captured line of what the debuggee printed. */
+@Serializable
+data class SessionOutputLine(
+    val seq: Int,
+    /** "stdout" or "stderr". */
+    val stream: String,
+    val text: String
+)
+
+@Serializable
+data class SessionOutputResult(
+    val sessionId: String,
+    val lines: List<SessionOutputLine>,
+    /** Pass this back as `since` to read only what is new. */
+    val nextSince: Int,
+    /**
+     * Lines discarded because the buffer wrapped. Non-zero means output was lost,
+     * not that the program was quiet -- a silent drop would let a reader conclude
+     * the opposite of the truth.
+     */
+    val dropped: Int,
+    val message: String? = null
 )

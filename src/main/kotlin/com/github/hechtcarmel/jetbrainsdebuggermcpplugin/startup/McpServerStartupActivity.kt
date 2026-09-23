@@ -1,6 +1,7 @@
 package com.github.hechtcarmel.jetbrainsdebuggermcpplugin.startup
 
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.McpConstants
+import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.output.DebuggeeOutputService
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.server.McpServerService
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.settings.McpSettings
 import com.github.hechtcarmel.jetbrainsdebuggermcpplugin.util.IdeProductInfo
@@ -39,6 +40,11 @@ class McpServerStartupActivity : ProjectActivity {
 
     override suspend fun execute(project: Project) {
         LOG.info("MCP Server startup activity executing for project: ${project.name}")
+
+        // Before anything else: a program's output has to be captured from the
+        // moment its session starts, and a panic arrives once. Starting this
+        // later would make the first session of a project a blind spot.
+        DebuggeeOutputService.getInstance(project).start()
 
         try {
             // Check for v2.0.0 migration

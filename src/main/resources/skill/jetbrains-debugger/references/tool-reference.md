@@ -274,6 +274,45 @@ several and reads like your expression being wrong.
 
 ---
 
+### `list_execution_units`
+List the units of execution -- threads, goroutines or tasks -- with the kind each one is.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | No | Session ID |
+| `project_path` | string | No | Project path |
+
+**Requires:** Session paused.
+
+**Returns:** `sessionId`, `units[]` (id, kind, name, state, isCurrent), `currentUnitId`
+
+Equivalent to `list_threads`, phrased for every runtime. "Thread" is the wrong
+word in more runtimes than it is the right one; the kind travels with each unit
+so nothing has to be assumed from the tool's name.
+
+---
+
+### `get_session_output`
+Read what the debugged program printed on stdout and stderr.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | No | Session ID |
+| `project_path` | string | No | Project path |
+| `since` | integer | No | Return only output newer than this sequence number |
+| `limit` | integer | No | Maximum lines, default 200 |
+
+**Requires:** A session. Keeps working after the process exits.
+
+**Returns:** `sessionId`, `lines[]` (seq, stream, text), `nextSince`, `dropped`
+
+Pass the previous reply's `nextSince` back as `since` to read only what is new.
+`dropped` above zero means output was lost to the buffer wrapping, not that the
+program was quiet. The IDE console shows this to a person; this shows it to you,
+and a line a library logged instead of throwing is often the whole answer.
+
+---
+
 ### `list_threads`
 List all threads in the debugged process.
 
