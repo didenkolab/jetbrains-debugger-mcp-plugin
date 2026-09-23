@@ -230,7 +230,6 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 ## Available Tools
 
 The plugin provides **30 MCP tools** organized by category:
-The plugin provides **30 MCP tools** organized by category:
 
 
 ### Run Configuration Tools
