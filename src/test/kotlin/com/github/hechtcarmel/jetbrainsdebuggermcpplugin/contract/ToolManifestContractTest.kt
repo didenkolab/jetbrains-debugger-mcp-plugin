@@ -45,20 +45,18 @@ class ToolManifestContractTest {
         val EXPECTED_TOOL_NAMES = setOf(
             "apply_quick_fix",
             "describe_backend",
-            "get_session_output",
-            "list_execution_units",
             "evaluate_expression",
-            "find_usages",
-            "list_quick_fixes",
-        "trace_execution",
-
             "execute_run_configuration",
+            "find_usages",
             "get_debug_session_status",
+            "get_session_output",
             "get_source_context",
             "get_stack_trace",
             "get_variables",
             "list_breakpoints",
             "list_debug_sessions",
+            "list_execution_units",
+            "list_quick_fixes",
             "list_run_configurations",
             "list_threads",
             "pause_execution",
@@ -73,6 +71,7 @@ class ToolManifestContractTest {
             "step_out",
             "step_over",
             "stop_debug_session",
+            "trace_execution",
             "wait_for_pause",
         )
     }
