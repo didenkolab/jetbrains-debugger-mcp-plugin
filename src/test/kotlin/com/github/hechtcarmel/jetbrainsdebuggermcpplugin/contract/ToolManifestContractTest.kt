@@ -44,6 +44,7 @@ class ToolManifestContractTest {
          */
         val EXPECTED_TOOL_NAMES = setOf(
             "apply_quick_fix",
+            "describe_backend",
             "evaluate_expression",
             "find_usages",
             "list_quick_fixes",

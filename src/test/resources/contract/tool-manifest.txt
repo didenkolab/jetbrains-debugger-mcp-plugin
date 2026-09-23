@@ -1,7 +1,7 @@
 # MCP tool manifest — golden snapshot
 # Snapshot of the SDK Tool as serialized to clients, not of the authored schema.
 # Regenerate: ./gradlew test --tests "*ToolManifestContractTest" -Dcontract.update=true
-# tools: 27
+# tools: 28
 
 ## apply_quick_fix
 description:
@@ -84,6 +84,39 @@ outputSchema:
     ],
     "type": "object"
   }
+
+## describe_backend
+description:
+  Reports what this debugger can and cannot do: changing variables, calling functions during
+  evaluation, watchpoints, hit counts, tracing without stopping, breakpoints by symbol.
+  Read it before planning a debugging strategy rather than discovering the limits by failing
+  into them. Capabilities depend on the engine attached, so the answer is most accurate while
+  a session is running.
+annotations:
+  {
+    "destructiveHint": false,
+    "idempotentHint": true,
+    "openWorldHint": false,
+    "readOnlyHint": true,
+    "title": "Describe Backend"
+  }
+inputSchema:
+  {
+    "properties": {
+      "project_path": {
+        "description": "Absolute path to the project root. Required when multiple projects are open, optional otherwise.",
+        "type": "string"
+      },
+      "session_id": {
+        "description": "Debug session ID. Uses current session if omitted.",
+        "type": "string"
+      }
+    },
+    "required": [],
+    "type": "object"
+  }
+outputSchema:
+  <none>
 
 ## evaluate_expression
 description:

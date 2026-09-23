@@ -4,6 +4,37 @@
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-09-23
+
+### Added
+
+- **`trace_execution`** records the expressions you name at every probe and returns the whole
+  transcript from one call. Asking "what is this variable at each iteration" with
+  `set_breakpoint` / `resume_execution` / `wait_for_pause` costs a round trip per stop, and makes
+  the agent carry the running story across all of them; here the answer *is* the story. Probes
+  suspend execution exactly as a breakpoint does, so for a race a log breakpoint is still the
+  right tool.
+
+- **`describe_backend`** reports what this debugger can and cannot do as a value an agent can
+  read: changing variables, calling functions during evaluation, watchpoints, hit counts, tracing
+  without stopping, breakpoints by symbol.
+
+  This replaces prose with data. The support matrix used to live in documentation — "Full Support
+  (Java, Kotlin, Python…)", "Limited Support (Rust, C++, C, Go, Swift)" — which is a documentation
+  answer to a machine problem: the agent learned the limit from text it may never have been given,
+  could not check it, and discovered it by making a call that failed. The values are derived from
+  the engine actually attached rather than from a table of language names, because the same IDE
+  debugs different languages through different engines and the engine is what sets the limit. An
+  unrecognised engine is reported as unknown with the cautious answer, never the optimistic one.
+
+- **`find_usages`, `list_quick_fixes` and `apply_quick_fix`** bring the IDE's own analysis within
+  reach of an agent that is already stopped in the code.
+
+### Fixed
+
+- **Frame labels now come from the IDE's own rendering** rather than from `toString()`, so a frame
+  reads as the IDE shows it.
+
 ## [5.0.2] - 2026-08-13
 
 ### Fixed

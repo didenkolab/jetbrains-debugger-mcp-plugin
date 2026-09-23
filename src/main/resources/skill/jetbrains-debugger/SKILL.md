@@ -6,7 +6,7 @@ description: >-
   start_debug_session, stop_debug_session, get_debug_session_status, list_debug_sessions,
   set_breakpoint, remove_breakpoint, list_breakpoints, resume_execution, pause_execution,
   step_over, step_into, step_out, run_to_line, wait_for_pause, get_stack_trace, select_stack_frame,
-  list_threads, get_variables, set_variable, get_source_context, evaluate_expression,
+  list_threads, describe_backend, get_variables, set_variable, get_source_context, evaluate_expression,
   find_usages, list_quick_fixes, apply_quick_fix.
   trace_execution.
 
@@ -170,6 +170,7 @@ These use native debuggers (LLDB/GDB) with restrictions:
 | `get_stack_trace` | Full call stack | **Yes** |
 | `select_stack_frame` | Change frame context | **Yes** |
 | `list_threads` | See all threads | **Yes** |
+| `describe_backend` | Ask what this debugger can do before planning | **Yes** |
 | `get_variables` | Variables in current frame | **Yes** |
 | `set_variable` | Modify a variable at runtime | **Yes** |
 | `get_source_context` | Source code around a location | No |

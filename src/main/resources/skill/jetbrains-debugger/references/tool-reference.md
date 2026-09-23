@@ -251,6 +251,29 @@ Change debugger context to a different stack frame (to inspect variables in a di
 
 **Returns:** `frameIndex`, `frame` (StackFrameInfo), `message`
 
+### `describe_backend`
+Report what this debugger can and cannot do, as data rather than prose.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | No | Session ID |
+| `project_path` | string | No | Project path |
+
+**Requires:** Nothing. More accurate while a session is running, because the
+capabilities depend on the engine attached.
+
+**Returns:** `engine`, `language`, `ide`, `withoutSession`, and `capabilities`
+(`setVariable`, `evalCallsFunctions`, `watchpoints`, `hitCounts`, `traceMode`,
+`breakpointBySymbol`, `ancestry`, `breakpointKinds`).
+
+Read it before planning. Capabilities differ by engine, not by language name:
+native debuggers behind LLDB or GDB refuse method calls in an expression and
+write back only primitives, and no engine here offers watchpoints or hit counts.
+Finding that out from this costs one call; finding it out by failing costs
+several and reads like your expression being wrong.
+
+---
+
 ### `list_threads`
 List all threads in the debugged process.
 

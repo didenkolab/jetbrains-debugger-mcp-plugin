@@ -57,7 +57,7 @@ Unlike manual debugging, this plugin enables:
 - **Rich Context in Single Calls** - Get variables, stack, and source in one request
 - **Programmatic Breakpoint Control** - Set conditional breakpoints with complex expressions
 - **Cross-IDE Compatibility** - Works with any JetBrains IDE that supports XDebugger
-- **27 Comprehensive Tools** - Full debugging capability through MCP
+- **28 Comprehensive Tools** - Full debugging capability through MCP
 
 - **Configurable Server** - IDE-specific ports with customizable host binding
 
@@ -229,8 +229,8 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ## Available Tools
 
-The plugin provides **27 MCP tools** organized by category:
-The plugin provides **27 MCP tools** organized by category:
+The plugin provides **28 MCP tools** organized by category:
+The plugin provides **28 MCP tools** organized by category:
 
 
 ### Run Configuration Tools
@@ -276,6 +276,7 @@ The plugin provides **27 MCP tools** organized by category:
 | `get_stack_trace` | Get current call stack with file/line/method info |
 | `select_stack_frame` | Change debugger context to a different stack frame |
 | `list_threads` | List all threads with state information |
+| `describe_backend` | Report what this debugger can and cannot do, as data rather than prose |
 
 ### Variable Tools
 
