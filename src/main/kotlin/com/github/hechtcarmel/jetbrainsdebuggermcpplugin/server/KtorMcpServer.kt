@@ -31,7 +31,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.IOException
 import java.net.BindException
+import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -80,28 +83,75 @@ class KtorMcpServer(
     }
 
     fun start(): StartResult {
+        // Ask the OS before handing the port to CIO.
+        //
+        // start(wait = false) binds inside a coroutine and returns before that has happened, so a
+        // port something else already holds produced StartResult.Success here and threw the
+        // BindException later, on another thread, into whatever happened to be running. The user was
+        // told the server had started and never saw the notification naming the port to change.
+        probeBind()?.let { return it }
         return try {
             server = embeddedServer(CIO, port = port, host = host) { configure() }
             server?.start(wait = false)
             LOG.info("MCP Server started on http://$host:$port")
             StartResult.Success
-        } catch (e: BindException) {
-            LOG.warn("Port $port is already in use", e)
-            StartResult.PortInUse(port)
         } catch (e: Exception) {
-            // CIO reports a failed bind by cancelling the start coroutine, so the BindException we
-            // actually care about arrives wrapped.
-            if (e is CancellationException) {
-                val cause = e.cause
-                if (cause is BindException) {
-                    LOG.warn("Failed to start server on $host:$port: ${cause.message}", cause)
-                    return StartResult.Error("Failed to bind to $host:$port. ${cause.message}", cause)
-                }
-                throw e
+            // CIO reports a failed bind by cancelling the start coroutine, and the BindException
+            // arrives nested at a depth that is not ours to predict -- two JobCancellationExceptions
+            // deep in practice. Inspecting only the immediate cause let the commonest startup
+            // failure there is, a port something else already holds, escape as a thrown exception
+            // rather than the result that raises the "port in use" notification.
+            val bindFailure = bindFailureIn(e)
+            if (bindFailure != null) {
+                LOG.warn("Port $port on $host is already in use", bindFailure)
+                return StartResult.PortInUse(port)
             }
+            // A cancellation that is not a bind failure is somebody else's business; swallowing it
+            // would report a server that is not running as merely erroring.
+            if (e is CancellationException) throw e
             LOG.error("Failed to start MCP server", e)
             StartResult.Error(e.message ?: "Unknown error", e)
         }
+    }
+
+    /**
+     * Binds the port briefly to find out whether it is available, because the engine will not say so
+     * in time.
+     *
+     * A process holding the port fails this bind whatever the socket options, which is the case worth
+     * catching. The gap between releasing this probe and CIO binding is real but small, and a failure
+     * inside it still travels the cause chain below -- so this makes the common answer reliable
+     * without pretending to make the rare one impossible.
+     */
+    private fun probeBind(): StartResult? =
+        try {
+            ServerSocket().use { probe ->
+                probe.reuseAddress = false
+                probe.bind(InetSocketAddress(host, port))
+            }
+            null
+        } catch (e: BindException) {
+            LOG.warn("Port $port on $host is already in use", e)
+            StartResult.PortInUse(port)
+        } catch (e: IOException) {
+            LOG.warn("Cannot bind $host:$port", e)
+            StartResult.Error("Cannot bind to $host:$port. ${e.message}", e)
+        }
+
+    /**
+     * Finds a [BindException] anywhere in the cause chain.
+     *
+     * The visited set is not paranoia: a self-referential chain would otherwise spin here, and
+     * hanging IDE startup is a worse failure than the one being diagnosed.
+     */
+    private fun bindFailureIn(error: Throwable): BindException? {
+        val visited = mutableSetOf<Throwable>()
+        var current: Throwable? = error
+        while (current != null && visited.add(current)) {
+            if (current is BindException) return current
+            current = current.cause
+        }
+        return null
     }
 
     fun stop() {

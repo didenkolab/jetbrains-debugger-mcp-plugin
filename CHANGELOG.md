@@ -4,6 +4,26 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Starting the server on a port already in use no longer reports success.** CIO binds inside a
+  coroutine and returns before it has happened, so `start()` answered `Success` for a taken port and
+  the `BindException` arrived later, on another thread. The user was told the server had started and
+  never saw the notification naming the port to change — the notification written for exactly this
+  case. The port is now checked before the engine is handed it, and a bind failure is recognised
+  anywhere in the cause chain rather than only as the immediate cause, which it never was: two
+  coroutine cancellations sat in front of it.
+
+  Nothing covered an occupied port, which is why this survived. `KtorMcpServerBindTest` now does,
+  from both sides — a taken port must report, a free one must still start.
+
+- **The transport tests no longer fail two arbitrary tests per full-suite run.** A port cannot be
+  reserved: the helper asked the OS for a free one and released it, so between that and the engine
+  binding it could go to the next test in the same suite. The collision surfaced as a cancelled Ktor
+  start coroutine inside whichever test drew it, pointing nowhere near what that test checked. The
+  helper now retries on another port, which the comment there had claimed for some time without the
+  code doing it.
+
 ## [5.2.0] - 2026-09-23
 
 ### Added

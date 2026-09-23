@@ -52,14 +52,8 @@ abstract class McpHttpTestCase : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         registry = ToolRegistry().apply { registerBuiltInTools() }
-        port = freePort()
         mcpServer = McpServerFactory.create(registry, McpToolBridge())
-        server = KtorMcpServer(
-            port = port,
-            mcpServer = mcpServer,
-        )
-        val result = server.start()
-        assertEquals("MCP server failed to start on port $port: $result", KtorMcpServer.StartResult.Success, result)
+        startOnAFreePort()
         http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
         awaitServerReady()
     }
@@ -92,8 +86,34 @@ abstract class McpHttpTestCase : BasePlatformTestCase() {
         throw AssertionError("MCP server never accepted connections on port $port", lastFailure)
     }
 
-    // ponytail: retry rather than lock. The window between releasing the probe socket and the
-    // server binding is tiny, and the suite runs single-forked.
+    /**
+     * Picks a port and starts on it, retrying rather than trying to reserve one.
+     *
+     * A port cannot be held and handed over: [freePort] asks the OS for one and releases it, so
+     * between that and the engine binding it can go to anything -- including the next test in this
+     * same suite. That race failed two arbitrary tests on every full-suite run, and it failed them
+     * with a cancelled Ktor start coroutine, which points nowhere near what those tests check.
+     *
+     * Retrying is the honest fix: a collision is expected and cheap to survive, so the suite takes
+     * the next port instead of reporting a defect in whatever test drew the short straw.
+     */
+    private fun startOnAFreePort() {
+        val refused = mutableListOf<String>()
+        repeat(PORT_ATTEMPTS) {
+            val candidate = freePort()
+            val attempt = KtorMcpServer(port = candidate, mcpServer = mcpServer)
+            val result = attempt.start()
+            if (result == KtorMcpServer.StartResult.Success) {
+                port = candidate
+                server = attempt
+                return
+            }
+            attempt.stop()
+            refused += "port $candidate: $result"
+        }
+        fail("MCP server did not start in $PORT_ATTEMPTS attempts: ${refused.joinToString("; ")}")
+    }
+
     private fun freePort(): Int = ServerSocket(0).use { it.localPort }
 
     // ── Requests ────────────────────────────────────────────────────────────────────────
@@ -221,4 +241,10 @@ abstract class McpHttpTestCase : BasePlatformTestCase() {
             throw e.cause ?: e
         }
     }
+
+    private companion object {
+        /** Five is generous: a collision needs two tests to draw the same port in the same instant. */
+        const val PORT_ATTEMPTS = 5
+    }
+
 }
